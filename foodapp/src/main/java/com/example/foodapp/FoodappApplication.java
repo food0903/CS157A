@@ -7,9 +7,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.sql.*;
 
@@ -50,15 +55,19 @@ public class FoodappApplication {
 
 	
 	@PostMapping("/api/auth/login")
-	public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+	public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+		System.out.println(request.getSession().getId());
 		try {
-			this.authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(
-					request.getUsername(),
-					request.getPassword()
-				)
-			);
+			SecurityContext securityContext = SecurityContextHolder.getContext();
 
+			securityContext.setAuthentication(this.authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(
+					loginRequest.getUsername(),
+					loginRequest.getPassword()
+				)
+			));
+
+			request.getSession().setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
 			return ResponseEntity.ok("Successfully Authenticated");
 		}
 		catch (Exception e) {
@@ -108,8 +117,8 @@ public class FoodappApplication {
 	 */
 
 	@GetMapping("/api/meals")
-	public String getAllMeals() {
-		return "TODO";
+	public ResponseEntity<?> getAllMeals() {
+		return ResponseEntity.ok("meals");
 	}
 	
 	@GetMapping("/api/meals/{mealId}")
