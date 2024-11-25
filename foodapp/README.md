@@ -15,5 +15,7 @@ I suggest using `postgres` for username and `admin` for the password for simplic
 
 Please note that there is also a field called "spring.sql.init.mode" in `application.properties` that is commented out. This setting automatically creates the tables defined in `schema.sql` and seeds the database with the values in `data.sql` upon initialization of the server. However, if the tables already exist, then having this option enabled causes the server to crash during initialization (hence why it is commented out).
 
+Additionally, any changes made to `application.properties` will not be tracked by git because its update-index has been set to --assume-unchanged.
+
 3. Run the application from `FoodappApplication.java`
 4. The backend should be hosted locally on [localhost:8080](localhost:8080)

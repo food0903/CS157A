@@ -1,2 +1,3 @@
 .DS_Store
 .vscode/
+foodapp/src/main/resources/application.properties
