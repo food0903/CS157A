@@ -1,7 +1,7 @@
 
 ## How to Setup and Run
 
-1. Create in PostgreSQL server
+1. Create a database in PostgreSQL server
 2. Go into `src/main/resources/application.properties` and fill in the following details
 ```
 spring.datasource.url=jdbc:postgresql://<host>:<port>/<db-name>
