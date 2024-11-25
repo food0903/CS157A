@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.RequestContext;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -82,8 +83,15 @@ public class FoodappApplication {
 	}
 
 	@PostMapping("/api/auth/logout")
-	public String logout() {
-		return "TODO";
+	public ResponseEntity<?> logout(HttpServletRequest request) {
+		if (request.getSession().getId() != null) {
+			request.getSession().invalidate();
+
+			SecurityContextHolder.clearContext();
+
+			return ResponseEntity.ok("Successfully Logged out.");
+		}
+		return ResponseEntity.ok("No session to logout from.");
 	}
 
 	@GetMapping("/api/hello")
