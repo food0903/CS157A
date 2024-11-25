@@ -1,9 +1,12 @@
 package com.example.foodapp;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,7 +16,6 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.RequestContext;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -31,12 +33,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 public class FoodappApplication {
 
-	@Value("${spring.datasource.url}")
-	static String JDBC_URL;
-	@Value("${spring.datasource.username}")
-	static String USERNAME;
-	@Value("${spring.datasource.password}")
-	static String PASSWORD;
+	static String JDBC_URL =
+	static String USERNAME =
+	static String PASSWORD =
 
 	private final AuthenticationManager authenticationManager;
 
@@ -126,6 +125,27 @@ public class FoodappApplication {
 
 	@GetMapping("/api/meals")
 	public ResponseEntity<?> getAllMeals() {
+
+		try {
+			System.out.println(JDBC_URL);
+			Connection conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
+			/*
+			Statement stmt = conn.createStatement();
+ 
+			String CreatePersonTable = "CREATE TABLE Person ( id INTEGER PRIMARY KEY, name VARCHAR(255))";
+			stmt.executeQuery(CreatePersonTable);
+
+			stmt.close();
+			*/
+			conn.close();
+
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace(System.out);
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace(System.out);
+		}
 		return ResponseEntity.ok("meals");
 	}
 	
