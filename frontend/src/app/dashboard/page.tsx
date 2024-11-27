@@ -1,3 +1,4 @@
+"use client"
 import Link from "next/link"
 import { UtensilsCrossed, Heart, ChefHat, Salad } from 'lucide-react'
 import { Card } from "@/components/ui/card"

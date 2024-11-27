@@ -7,13 +7,13 @@ import Image from 'next/image'
 import Link from "next/link"
 
 export default function page() {
-    const [email, setEmail] = useState('')
+    const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [passwordCheck, setPasswordCheck] = useState('')
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        console.log('sigup with ', email, password, passwordCheck)
+        console.log('sigup with ', username, password, passwordCheck)
     }
 
     return (
@@ -33,17 +33,17 @@ export default function page() {
                 <form onSubmit={handleSubmit} className="mt-8 space-y-6">
                     <div className="space-y-4">
                         <div>
-                            <Label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Email
+                            <Label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                                Username
                             </Label>
                             <Input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                id="username"
+                                type="username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                                 required
                                 className="mt-1 block w-full rounded-full border-teal-300 focus:border-teal-500 focus:ring-teal-500"
-                                placeholder="Enter your email"
+                                placeholder="Create your username"
                             />
                         </div>
                         <div>
