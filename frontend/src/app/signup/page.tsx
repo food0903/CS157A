@@ -13,7 +13,7 @@ export default function page() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        console.log('Login attempted with:', email, password)
+        console.log('sigup with ', email, password, passwordCheck)
     }
 
     return (

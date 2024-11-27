@@ -3,7 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Image from "next/image";
 import Link from "next/link";
-import { Leaf } from "lucide-react";
+
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -31,8 +31,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="min-h-screen bg-[#e0f4e8]">
-          <header className="px-4 lg:px-6 h-16 flex items-center">
-            <Link className="flex items-center justify-center mt-8" href="/">
+          <header className="px-4 lg:px-6 h-24 flex items-center">
+            <Link className="flex items-center justify-center" href="/">
               <Image src="/images/boba.png"
                 alt="food logo"
                 className="mx-auto"
