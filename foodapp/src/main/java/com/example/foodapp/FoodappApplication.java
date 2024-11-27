@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.foodapp.payloads.AuthRequest;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.sql.*;
@@ -33,9 +35,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 public class FoodappApplication {
 
-	static String JDBC_URL =
-	static String USERNAME =
-	static String PASSWORD =
+	static String JDBC_URL = "jdbc:postgresql://localhost:5432/food";
+	static String USERNAME = "postgres";
+	static String PASSWORD = "admin";
 
 	private final AuthenticationManager authenticationManager;
 
@@ -55,7 +57,7 @@ public class FoodappApplication {
 
 	
 	@PostMapping("/api/auth/login")
-	public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+	public ResponseEntity<?> login(@RequestBody AuthRequest loginRequest, HttpServletRequest request) {
 		System.out.println(request.getSession().getId());
 		try {
 			SecurityContext securityContext = SecurityContextHolder.getContext();
@@ -77,8 +79,35 @@ public class FoodappApplication {
 	}
 
 	@PostMapping("/api/auth/register")
-	public String register() {
-		return "TODO";
+	public ResponseEntity<?> register(@RequestBody AuthRequest registeRequest) {
+		try {
+			Class.forName("org.postgresql.Driver");
+			Connection conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
+
+			String insertNewUserQuery = "INSERT INTO users (user_id, username, password, enabled) " + 
+				"VALUES (DEFAULT, ?, ?, true)";
+
+			PreparedStatement ps = conn.prepareStatement(insertNewUserQuery);
+
+			ps.setString(1, registeRequest.getUsername());
+			ps.setString(2, registeRequest.getPassword());
+
+			ps.execute();
+
+			ps.close();
+			conn.close();
+
+			return ResponseEntity.ok("User successfully created!");
+
+		} catch (ClassNotFoundException e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace(System.out);
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace(System.out);
+		}
+
+		return ResponseEntity.status(409).body("User with same username already exists");
 	}
 
 	@PostMapping("/api/auth/logout")
