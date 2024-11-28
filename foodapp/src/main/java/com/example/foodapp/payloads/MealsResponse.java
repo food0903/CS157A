@@ -1,11 +1,15 @@
 package com.example.foodapp.payloads;
 
+import java.util.List;
+import java.util.Map;
+
 public class MealsResponse {
 
     private Integer mealId;
     private String mealName;
     private String date;
     private String mealType;
+    private List<Map<Integer, Integer>> foodIds;
 
     public Integer getMealId() {
         return this.mealId;
@@ -23,6 +27,10 @@ public class MealsResponse {
         return this.mealType;
     }
 
+    public List<Map<Integer, Integer>> getFoodsIds() {
+        return this.foodIds;
+    }
+
     public void setMealId(Integer i) {
         this.mealId = i;
     }
@@ -37,6 +45,10 @@ public class MealsResponse {
 
     public void setDate(String s) {
         this.date = s;
+    }
+
+    public void setFoodIds(List<Map<Integer, Integer>> l) {
+        this.foodIds = l;
     }
 
 }

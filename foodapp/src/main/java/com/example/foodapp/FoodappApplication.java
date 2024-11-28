@@ -12,7 +12,6 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpServerErrorException;
 
 import com.example.foodapp.payloads.*;
 
@@ -20,13 +19,9 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-
-import javax.naming.spi.DirStateFactory.Result;
-import javax.print.attribute.standard.PresentationDirection;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -178,8 +173,30 @@ public class FoodappApplication {
 				temp.setMealName(rs.getString("meal_name"));
 				temp.setDate(rs.getString("date"));
 				temp.setMealType(rs.getString("meal_type"));
+
+				// get all food_id's and quantities for this meal
+				ArrayList<Map<Integer, Integer>> foodIds = new ArrayList<>();
+				String getFoodIdsQuery = "SELECT food_id, quantity FROM meal_foods WHERE meal_id = ?";
+				PreparedStatement ps2 = conn.prepareStatement(getFoodIdsQuery);
+
+				ps2.setInt(1, rs.getInt("meal_id"));
+				ResultSet rs2 = ps2.executeQuery();
+
+				// add values to response body			
+				while (rs2.next()) {
+					foodIds.add(Map.of(rs2.getInt("food_id"), rs2.getInt("quantity")));
+				}
+
+				rs2.close();
+				ps2.close();
+
+				temp.setFoodIds(foodIds);
+
 				meals.add(temp);
 			}
+
+			rs.close();
+			ps.close();
 
 		} catch (SQLException e) {
 			noFailures = false;
@@ -205,8 +222,81 @@ public class FoodappApplication {
 	}
 	
 	@GetMapping("/api/meals/{mealId}")
-	public String getMealById(@PathVariable Integer mealId) {
-		return new String();
+	public ResponseEntity<?> getMealById(@PathVariable Integer mealId, HttpServletRequest request) {
+		Connection conn = null;
+		boolean noFailures = true;
+		MealsResponse meal = null;
+
+		try {
+			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
+
+			/*
+			 * Get all meals with user_id equal to current user
+			 */
+
+			// prepare statement to get all meals of current user
+			String query = "SELECT * FROM meals WHERE user_id = ? AND meal_id = ?";
+			PreparedStatement ps = conn.prepareStatement(query);
+
+			// set user_id and execute the query
+			ps.setInt(1, Integer.parseInt((String) request.getSession().getAttribute("user_id")));
+			ps.setInt(2, mealId);
+
+			ResultSet rs = ps.executeQuery();
+
+			// iterate through all rows from SELECT and append all columns to response body
+			if (rs.next()) {
+				meal = new MealsResponse();
+				meal.setMealId(rs.getInt("meal_id"));
+				meal.setMealName(rs.getString("meal_name"));
+				meal.setDate(rs.getString("date"));
+				meal.setMealType(rs.getString("meal_type"));
+
+				// query to get the quantity of each food in the meal
+				ArrayList<Map<Integer, Integer>> foodIds = new ArrayList<>();
+				String getFoodIdsQuery = "SELECT food_id, quantity FROM meal_foods WHERE meal_id = ?";
+				PreparedStatement ps2 = conn.prepareStatement(getFoodIdsQuery);
+				ps2.setInt(1, mealId);
+
+				// store food_id and corresponding quantity in response body
+				ResultSet rs2 = ps2.executeQuery();
+				while (rs2.next()) {
+					foodIds.add(Map.of(rs2.getInt("food_id"), rs2.getInt("quantity")));
+				}
+
+				rs2.close();
+				ps2.close();
+
+				meal.setFoodIds(foodIds);
+			}
+
+			rs.close();
+			ps.close();
+
+		} catch (SQLException e) {
+			noFailures = false;
+			System.out.println(e.getMessage());
+			e.printStackTrace(System.out);
+		} finally {
+			// attempt to close connection if it is not null
+			if (conn != null) {
+				try {
+					conn.close();
+	 			} catch (SQLException e) {
+					System.err.println("Failed to close connection");	
+					System.err.println(e.getMessage());
+				}
+			}
+		}
+		if (meal == null) {
+			return ResponseEntity.status(400).body("No meal with meal_id " + mealId);
+		}
+
+		if (noFailures) {
+			// return the meals to user
+			return ResponseEntity.ok(meal);
+		}
+		return ResponseEntity.status(400).body("bad request");
 	}
 
 	@PostMapping("/api/meals")
@@ -219,6 +309,7 @@ public class FoodappApplication {
 
 		Connection conn = null;
 		boolean noFailures = true;
+		Integer meal_id = null;
 
 		try {
 			
@@ -250,9 +341,10 @@ public class FoodappApplication {
 			if (!rs.next()) {
 				return ResponseEntity.status(500).body("Could not get meal_id of newly inserted column");
 			}
-			Integer meal_id = rs.getInt(1);
+			meal_id = rs.getInt(1);
 
 			// cleanup
+			rs.close();
 			ps.close();
 
 			// 2.
@@ -303,14 +395,115 @@ public class FoodappApplication {
 		}
 
 		if (noFailures) {
-			return ResponseEntity.ok("Successfully added meal!");
+			HashMap<String, String> res_body = new HashMap<>();
+			res_body.put("mealId", meal_id.toString());
+			res_body.put("body", "Successfully added a new meal!");
+			return ResponseEntity.ok(res_body);
 		}
 		return ResponseEntity.status(400).body("bad request");
 	}
 
 	@PutMapping("/api/meals/{mealId}")
-	public String updateMealById(@PathVariable Integer mealId) {
-		return new String();
+	public ResponseEntity<?> updateMealById(@PathVariable Integer mealId, @RequestBody MealsRequest mealsRequest, HttpServletRequest request) {
+		// check if meal is linked to at least 1 food
+		if (mealsRequest.getFoodIds().size() < 1) {
+			return ResponseEntity.status(400).body("foodIds must be a non-empty list!");
+		}
+
+		Connection conn = null;
+		boolean noFailures = true;
+
+		try {
+			
+			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
+			conn.setAutoCommit(false);
+
+			/*
+			 * 1. Update meal in meals table with meal_id
+			 * 2. Update meal_foods
+			 */
+			
+			// 1.
+			// create the prepared statement for inserting into meals
+			String query = "UPDATE meals " + 
+				"SET meal_name = ?, date = ?, meal_type = ? " +
+				"WHERE meal_id = ?";
+			PreparedStatement ps = conn.prepareStatement(query);
+
+			// insert values into prepared statement
+			ps.setString(1, mealsRequest.getMealName());
+			ps.setDate(2, mealsRequest.getDate());
+			ps.setString(3, mealsRequest.getMealType());
+			ps.setInt(4, mealId);
+
+			// execute the query
+			ps.executeUpdate();
+
+			// cleanup
+			ps.close();
+
+			// 2.
+			// DELETE all rows from meal_foods with meal_id
+			String deleteSql = "DELETE FROM meal_foods WHERE meal_id = ?";
+			PreparedStatement deleteStmt = conn.prepareStatement(deleteSql);
+
+			// execute DELETE and close
+			deleteStmt.setInt(1, mealId);
+			deleteStmt.executeUpdate();
+			deleteStmt.close();
+
+
+			// re-INSERT all rows with new updated values
+			query = "INSERT INTO meal_foods (meal_food_id, meal_id, food_id, quantity) " + 
+				"VALUES (DEFAULT, ?, ?, ?)";
+			ps = conn.prepareStatement(query);
+
+			Map<Integer, Integer> foodIds = mealsRequest.getFoodIds();
+			Iterator<Integer> keys = foodIds.keySet().iterator();
+
+			while (keys.hasNext()) {
+				Integer foodId = keys.next();
+				ps.setInt(1, mealId);
+				ps.setInt(2, foodId);
+				ps.setInt(3, foodIds.get(foodId));
+				ps.execute();
+			}
+
+			// close and commit
+			ps.close();
+			conn.commit();
+
+		} catch (SQLException e) {
+			noFailures = false;
+			System.err.println(e.getMessage());
+			e.printStackTrace(System.out);
+
+			// attempt to rollback if connection is not null
+			if (conn != null) {
+				try {
+					System.out.println("Attempting to rollback transaction.");
+					conn.rollback();
+				} catch (SQLException se) {
+					System.err.println("Failed to rollback.");
+					System.err.println(se.getMessage());
+				}
+			}
+		} finally {
+			// attempt to close connection if it is not null
+			if (conn != null) {
+				try {
+					conn.close();
+	 			} catch (SQLException e) {
+					System.err.println("Failed to close connection");	
+					System.err.println(e.getMessage());
+				}
+			}
+		}
+
+		if (noFailures) {
+			return ResponseEntity.ok("Successfully updated meal!");
+		}
+		return ResponseEntity.status(400).body("bad request");
 	}
 
 	@DeleteMapping("/api/meals/{mealId}")
