@@ -13,7 +13,7 @@ CREATE TABLE authorities (
 
 CREATE TABLE meals (
 	meal_id SERIAL PRIMARY KEY,
-	user_id INTEGER REFERENCES users(user_id),
+	user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
 	meal_name VARCHAR(500),
 	date DATE NOT NULL,
 	meal_type VARCHAR(20)
@@ -21,7 +21,8 @@ CREATE TABLE meals (
 
 CREATE TABLE foods (
 	food_id SERIAL PRIMARY KEY,
-	food_name VARCHAR(500),
+	user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
+	food_name VARCHAR(500) NOT NULL,
 	calories INTEGER NOT NULL,
 	carbs INTEGER NOT NULL,
 	fats INTEGER NOT NULL,
@@ -30,6 +31,7 @@ CREATE TABLE foods (
 
 CREATE TABLE ingredients (
 	ingredient_id SERIAL PRIMARY KEY,
+	user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
 	ingredient_name VARCHAR(500),
 	calories INTEGER NOT NULL,
 	carbs INTEGER NOT NULL,
@@ -39,14 +41,14 @@ CREATE TABLE ingredients (
 
 CREATE TABLE meal_foods (
 	meal_food_id SERIAL PRIMARY KEY,
-	meal_id INTEGER REFERENCES meals(meal_id),
-	food_id INTEGER REFERENCES foods(food_id),
+	meal_id INTEGER REFERENCES meals(meal_id) ON DELETE CASCADE,
+	food_id INTEGER REFERENCES foods(food_id) ON DELETE CASCADE,
 	quantity INTEGER NOT NULL
 );
 
 CREATE TABLE food_ingredients (
 	food_ingredient_id SERIAL PRIMARY KEY,
-	food_id INTEGER REFERENCES foods(food_id),
-	ingredient_id INTEGER REFERENCES ingredients(ingredient_id),
+	food_id INTEGER REFERENCES foods(food_id) ON DELETE CASCADE,
+	ingredient_id INTEGER REFERENCES ingredients(ingredient_id) ON DELETE CASCADE,
 	quantity INTEGER NOT NULL
 );
