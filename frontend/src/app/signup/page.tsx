@@ -1,19 +1,50 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from 'next/image'
 import Link from "next/link"
+import { useRouter } from 'next/navigation'
+import { registerSession, getClientSession } from '@/lib/actions'
 
 export default function page() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [passwordCheck, setPasswordCheck] = useState('')
+    const [errors, setErrors] = useState<string | null>(null);
+    const router = useRouter()
 
-    const handleSubmit = (e: React.FormEvent) => {
+    useEffect(() => {
+        const checkSession = async () => {
+            const session = await getClientSession();
+            if (session.isLogged) {
+                router.push('/dashboard');
+            }
+        };
+
+        checkSession();
+    }, [router]);
+
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         console.log('sigup with ', username, password, passwordCheck)
+
+        try {
+            const message = await registerSession(username, password, passwordCheck)
+            console.log('check iam here:', message)
+
+            if (message) {
+                setErrors(message)
+            } else {
+                router.push('/dashboard');
+            }
+        } catch (error) {
+            console.error('Error occurred while signing up:', error)
+            setErrors('An unexpected error occurred. Please try again.')
+        }
+
     }
 
     return (
@@ -81,6 +112,7 @@ export default function page() {
                             Sign up
                         </Button>
                     </div>
+                    {errors && <p className="text-red-500 text-sm mt-1">{errors}</p>}
                 </form>
                 {/* <div className="text-center">
                     <Link href="/signup" className="text-sm font-medium text-teal-600 hover:text-teal-500">

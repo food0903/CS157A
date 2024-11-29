@@ -1,9 +1,16 @@
-"use client"
 import Link from "next/link"
 import { UtensilsCrossed, Heart, ChefHat, Salad } from 'lucide-react'
 import { Card } from "@/components/ui/card"
+import { getSession } from "@/lib/actions"
+import { redirect } from "next/navigation"
 
-export default function page() {
+export default async function page() {
+    const session = await getSession()
+
+    if (!session.isLogged) {
+        redirect('/signin')
+    }
+
     return (
         <div className="min-h-screen bg-[#e0f4e8]">
             <div className="container mx-auto px-4 py-16">
