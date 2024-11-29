@@ -299,6 +299,13 @@ public class FoodappApplication {
 		return ResponseEntity.status(400).body("bad request");
 	}
 
+	/*
+	 * Request Body must include these fields:
+	 * 	- mealName (String)
+	 * 	- date (String yyyy-mm-dd)
+	 * 	- mealType (String)
+	 *  - foodIds (Object mapping ID to quantity (Integer))
+	 */
 	@PostMapping("/api/meals")
 	public ResponseEntity<?> addMealById(@RequestBody MealsRequest mealsRequest, HttpServletRequest request) {
 
@@ -403,6 +410,20 @@ public class FoodappApplication {
 		return ResponseEntity.status(400).body("bad request");
 	}
 
+	/*
+	 * Request Body must include these fields:
+	 * 	- mealName (String)
+	 * 	- date (String yyyy-mm-dd)
+	 * 	- mealType (String)
+	 *  - foodIds (Object mapping ID to quantity (Integer))
+	 */
+	/*
+	 * Request Body must include these fields:
+	 * 	- mealName (String)
+	 * 	- date (String yyyy-mm-dd)
+	 * 	- mealType (String)
+	 *  - foodIds (Object mapping ID to quantity (Integer))
+	 */
 	@PutMapping("/api/meals/{mealId}")
 	public ResponseEntity<?> updateMealById(@PathVariable Integer mealId, @RequestBody MealsRequest mealsRequest, HttpServletRequest request) {
 		// check if meal is linked to at least 1 food
@@ -577,13 +598,165 @@ public class FoodappApplication {
 	 */
 
 	@GetMapping("/api/foods")
-	public String getAllFoods(HttpServletRequest request) {
-		return (String) request.getSession().getAttribute("username");
+	public ResponseEntity<?> getAllFoods(HttpServletRequest request) {
+
+		Connection conn = null;
+		boolean noFailures = true;
+		ArrayList<FoodsResponse> foods = new ArrayList<>();
+
+		try {
+			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
+
+			/*
+			 * Get all foods with user_id equal to current user
+			 */
+
+			// prepare statement to get all foods of current user
+			String query = "SELECT * FROM foods WHERE user_id = ?";
+			PreparedStatement ps = conn.prepareStatement(query);
+
+			// set user_id and execute the query
+			ps.setInt(1, Integer.parseInt((String) request.getSession().getAttribute("user_id")));
+			ResultSet rs = ps.executeQuery();
+
+
+			// iterate through ResultSet and append all foods to array
+			while (rs.next()) {
+				FoodsResponse temp = new FoodsResponse();
+				temp.setFoodId(rs.getInt("food_id"));
+				temp.setFoodName(rs.getString("food_name"));
+				temp.setCalories(rs.getInt("calories"));
+				temp.setCalories(rs.getInt("carbs"));
+				temp.setCalories(rs.getInt("fats"));
+				temp.setCalories(rs.getInt("protein"));
+
+				// get all ingredient_id's and quantities for this food
+				ArrayList<Map<Integer, Integer>> ingredientIds = new ArrayList<>();
+				String getIngredientIdsQuery = "SELECT ingredient_id, quantity FROM food_ingredients WHERE food_id = ?";
+				PreparedStatement ps2 = conn.prepareStatement(getIngredientIdsQuery);
+
+				ps2.setInt(1, rs.getInt("food_id"));
+				ResultSet rs2 = ps2.executeQuery();
+
+				// add values to response body			
+				while (rs2.next()) {
+					ingredientIds.add(Map.of(rs2.getInt("ingredient_id"), rs2.getInt("quantity")));
+				}
+
+				rs2.close();
+				ps2.close();
+
+				temp.setIngredientsIds(ingredientIds);
+
+				foods.add(temp);
+			}
+
+			rs.close();
+			ps.close();
+
+		} catch (SQLException e) {
+			noFailures = false;
+			System.out.println(e.getMessage());
+			e.printStackTrace(System.out);
+		} finally {
+			// attempt to close connection if it is not null
+			if (conn != null) {
+				try {
+					conn.close();
+	 			} catch (SQLException e) {
+					System.err.println("Failed to close connection");	
+					System.err.println(e.getMessage());
+				}
+			}
+		}
+
+		if (noFailures) {
+			// return the meals to user
+			return ResponseEntity.ok(foods);
+		}
+		return ResponseEntity.status(400).body("bad request");
 	}
 	
 	@GetMapping("/api/foods/{foodId}")
-	public String getFoodById(@PathVariable Integer foodId) {
-		return new String();
+	public ResponseEntity<?> getFoodById(@PathVariable Integer foodId, HttpServletRequest request) {
+
+		Connection conn = null;
+		boolean noFailures = true;
+		FoodsResponse food = null;
+
+		try {
+			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
+
+			/*
+			 * Get food with user_id equal to current user and food_id
+			 */
+
+			// prepare statement to get food of current user with food_id
+			String query = "SELECT * FROM foods WHERE user_id = ? AND food_id = ?";
+			PreparedStatement ps = conn.prepareStatement(query);
+
+			// set user_id and execute the query
+			ps.setInt(1, Integer.parseInt((String) request.getSession().getAttribute("user_id")));
+			ps.setInt(2, foodId);
+			ResultSet rs = ps.executeQuery();
+
+			// if the query was successful, create Response object and fill it with appropriate info
+			if (rs.next()) {
+				food = new FoodsResponse();
+				food.setFoodId(rs.getInt("food_id"));
+				food.setFoodName(rs.getString("food_name"));
+				food.setCalories(rs.getInt("calories"));
+				food.setCalories(rs.getInt("carbs"));
+				food.setCalories(rs.getInt("fats"));
+				food.setCalories(rs.getInt("protein"));
+
+				// get all ingredient_id's and quantities for this food
+				ArrayList<Map<Integer, Integer>> ingredientIds = new ArrayList<>();
+				String getIngredientIdsQuery = "SELECT ingredient_id, quantity FROM food_ingredients WHERE food_id = ?";
+				PreparedStatement ps2 = conn.prepareStatement(getIngredientIdsQuery);
+
+				ps2.setInt(1, rs.getInt("food_id"));
+				ResultSet rs2 = ps2.executeQuery();
+
+				// add values to response body			
+				while (rs2.next()) {
+					ingredientIds.add(Map.of(rs2.getInt("ingredient_id"), rs2.getInt("quantity")));
+				}
+
+				rs2.close();
+				ps2.close();
+
+				food.setIngredientsIds(ingredientIds);
+			}
+
+			rs.close();
+			ps.close();
+
+		} catch (SQLException e) {
+			noFailures = false;
+			System.out.println(e.getMessage());
+			e.printStackTrace(System.out);
+		} finally {
+			// attempt to close connection if it is not null
+			if (conn != null) {
+				try {
+					conn.close();
+	 			} catch (SQLException e) {
+					System.err.println("Failed to close connection");	
+					System.err.println(e.getMessage());
+				}
+			}
+		}
+
+		if (food == null) {
+			return ResponseEntity.status(400).body("No meal with meal_id " + foodId);
+		}
+
+		if (noFailures) {
+			// return the meals to user
+			return ResponseEntity.ok(food);
+		}
+		return ResponseEntity.status(400).body("bad request");
 	}
 
 	/*
@@ -593,12 +766,14 @@ public class FoodappApplication {
 	 * 	- carbs (Integer)
 	 * 	- fats (Integer)
 	 * 	- protein (Integer)
+	 *  - ingredientIds (Object mapping ID to quantity (Integer))
 	 */
 	@PostMapping("/api/foods")
-	public ResponseEntity<?> addFoodById(@RequestBody FoodsRequest foodRequest, HttpServletRequest request) {
+	public ResponseEntity<?> addFoodById(@RequestBody FoodsRequest foodsRequest, HttpServletRequest request) {
 
 		Connection conn = null;
 		boolean noFailures = true;
+		Integer food_id = null;
 
 		try {
 			
@@ -609,23 +784,49 @@ public class FoodappApplication {
 			 * Add new row to food table;
 			 */
 			
-			// 1.
 			// create the prepared statement for inserting into meals
 			String query = "INSERT INTO foods (food_id, user_id, food_name, calories, carbs, fats, protein) " +
 				"VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)";
-			PreparedStatement ps = conn.prepareStatement(query);
+			PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 
 			// insert values into prepared statement
 			ps.setInt(1, Integer.parseInt((String) request.getSession().getAttribute("user_id")));
-			ps.setString(2, foodRequest.getFoodName());
-			ps.setInt(3, foodRequest.getCalories());
-			ps.setInt(4, foodRequest.getCarbs());
-			ps.setInt(5, foodRequest.getFats());
-			ps.setInt(6, foodRequest.getProtein());
+			ps.setString(2, foodsRequest.getFoodName());
+			ps.setInt(3, foodsRequest.getCalories());
+			ps.setInt(4, foodsRequest.getCarbs());
+			ps.setInt(5, foodsRequest.getFats());
+			ps.setInt(6, foodsRequest.getProtein());
 
 			// execute the query
 			ps.execute();
 
+
+			// get food_id of newly inserted row
+			ResultSet rs = ps.getGeneratedKeys();
+			if (!rs.next()) {
+				return ResponseEntity.status(500).body("Could not get food_id of newly inserted column");
+			}
+			food_id = rs.getInt(1);
+
+			// cleanup
+			rs.close();
+			ps.close();
+
+			// 2.
+			query = "INSERT INTO food_ingredients (food_ingredient_id, food_id, ingredient_id, quantity) " + 
+				"VALUES (DEFAULT, ?, ?, ?)";
+			ps = conn.prepareStatement(query);
+
+			Map<Integer, Integer> ingredientIds = foodsRequest.getIngredientIds();
+			Iterator<Integer> keys = ingredientIds.keySet().iterator();
+
+			while (keys.hasNext()) {
+				Integer ingredientId = keys.next();
+				ps.setInt(1, food_id);
+				ps.setInt(2, ingredientId);
+				ps.setInt(3, ingredientIds.get(ingredientId));
+				ps.execute();
+			}
 			// close and commit
 			ps.close();
 			conn.commit();
@@ -658,19 +859,190 @@ public class FoodappApplication {
 		}
 
 		if (noFailures) {
-			return ResponseEntity.ok("Successfully added food!");
+			HashMap<String, String> res_body = new HashMap<>();
+			res_body.put("foodId", food_id.toString());
+			res_body.put("body", "Successfully added a new food!");
+			return ResponseEntity.ok(res_body);
 		}
 		return ResponseEntity.status(400).body("bad request");
 	}
 
+
+	/*
+	 * Request Body must include these fields:
+	 * 	- foodName (String)
+	 * 	- calories (Integer)
+	 * 	- carbs (Integer)
+	 * 	- fats (Integer)
+	 * 	- protein (Integer)
+	 *  - ingredientIds (Object mapping ID to quantity (Integer))
+	 */
 	@PutMapping("/api/foods/{foodId}")
-	public String updateFoodById(@PathVariable Integer foodId) {
-		return new String();
+	public ResponseEntity<?> updateFoodById(@PathVariable Integer foodId, @RequestBody FoodsRequest foodsRequest, HttpServletRequest request) {
+		// check if food is linked to at least 1 ingredient
+		if (foodsRequest.getIngredientIds().size() < 1) {
+			return ResponseEntity.status(400).body("foodIds must be a non-empty list!");
+		}
+
+		Connection conn = null;
+		boolean noFailures = true;
+
+		try {
+			
+			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
+			conn.setAutoCommit(false);
+
+			/*
+			 * 1. Update food in foods table with food_id
+			 * 2. Update food_ingredients
+			 */
+			
+			// 1.
+			// create the prepared statement for inserting into meals
+			String query = "UPDATE foods " + 
+				"SET food_name = ?, calories = ?, carbs = ?, fats = ?, protein = ? " +
+				"WHERE food_id = ?";
+			PreparedStatement ps = conn.prepareStatement(query);
+
+			// insert values into prepared statement
+			ps.setString(1, foodsRequest.getFoodName());
+			ps.setInt(2, foodsRequest.getCalories());
+			ps.setInt(3, foodsRequest.getCarbs());
+			ps.setInt(4, foodsRequest.getFats());
+			ps.setInt(5, foodsRequest.getProtein());
+			ps.setInt(6, foodId);
+
+			// execute the query
+			ps.executeUpdate();
+
+			// cleanup
+			ps.close();
+
+			// 2.
+			// DELETE all rows from food_ingredients with food_id
+			String deleteSql = "DELETE FROM food_ingredients WHERE food_id = ?";
+			PreparedStatement deleteStmt = conn.prepareStatement(deleteSql);
+
+			// execute DELETE and close
+			deleteStmt.setInt(1, foodId);
+			deleteStmt.executeUpdate();
+			deleteStmt.close();
+
+			// re-INSERT all rows with new updated values
+			query = "INSERT INTO food_ingredients (food_ingredient_id, food_id, ingredient_id, quantity) " + 
+				"VALUES (DEFAULT, ?, ?, ?)";
+			ps = conn.prepareStatement(query);
+
+			Map<Integer, Integer> foodIds = foodsRequest.getIngredientIds();
+			Iterator<Integer> keys = foodIds.keySet().iterator();
+
+			while (keys.hasNext()) {
+				Integer ingredientId = keys.next();
+				ps.setInt(1, foodId);
+				ps.setInt(2, ingredientId);
+				ps.setInt(3, foodIds.get(ingredientId));
+				ps.execute();
+			}
+
+			// close and commit
+			ps.close();
+			conn.commit();
+
+		} catch (SQLException e) {
+			noFailures = false;
+			System.err.println(e.getMessage());
+			e.printStackTrace(System.out);
+
+			// attempt to rollback if connection is not null
+			if (conn != null) {
+				try {
+					System.out.println("Attempting to rollback transaction.");
+					conn.rollback();
+				} catch (SQLException se) {
+					System.err.println("Failed to rollback.");
+					System.err.println(se.getMessage());
+				}
+			}
+		} finally {
+			// attempt to close connection if it is not null
+			if (conn != null) {
+				try {
+					conn.close();
+	 			} catch (SQLException e) {
+					System.err.println("Failed to close connection");	
+					System.err.println(e.getMessage());
+				}
+			}
+		}
+
+		if (noFailures) {
+			return ResponseEntity.ok("Successfully updated food!");
+		}
+		return ResponseEntity.status(400).body("bad request");
 	}
 
 	@DeleteMapping("/api/foods/{foodId}")
-	public String deleteFoodById(@PathVariable Integer foodId) {
-		return new String();
+	public ResponseEntity<?> deleteFoodById(@PathVariable Integer foodId, HttpServletRequest request) {
+
+		Connection conn = null;
+		boolean noFailures = true;
+
+		try {
+			
+			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
+			conn.setAutoCommit(false);
+
+			/*
+			 * Delete all rows with meal_id in meals (deletions will be cascaded to meal_foods table)
+			 */
+			
+			// create the prepared statement for inserting into meals
+			String query = "DELETE FROM foods WHERE user_id = ? AND food_id = ?";
+			PreparedStatement ps = conn.prepareStatement(query);
+
+			ps.setInt(1, Integer.parseInt((String) request.getSession().getAttribute("user_id")));
+			ps.setInt(2, foodId);
+
+			// execute the query
+			ps.execute();
+
+			// cleanup
+			ps.close();
+
+			// commit and close connection
+			conn.commit();
+
+		} catch (SQLException e) {
+			noFailures = false;
+			System.out.println(e.getMessage());
+			e.printStackTrace(System.out);
+
+			// attempt to rollback if connection is not null
+			if (conn != null) {
+				try {
+					System.out.println("Attempting to rollback transaction.");
+					conn.rollback();
+				} catch (SQLException se) {
+					System.err.println("Failed to rollback.");
+					System.err.println(se.getMessage());
+				}
+			}
+		} finally {
+			// attempt to close connection if not null
+			if (conn != null) {
+				try {
+					conn.close();
+	 			} catch (SQLException e) {
+					System.err.println("Failed to close connection");	
+					System.err.println(e.getMessage());
+				}
+			}
+		}
+
+		if (noFailures) {
+			return ResponseEntity.ok("Succesfully Deleted Food!");
+		}
+		return ResponseEntity.status(400).body("bad request");
 	}
 	
 	/**
@@ -689,9 +1061,94 @@ public class FoodappApplication {
 		return new String();
 	}
 
-	@PostMapping("/api/ingredients/{ingredientId}")
-	public String addIngredientById(@PathVariable Integer ingredientId) {
-		return new String();
+
+	/*
+	 * Request Body must include these fields:
+	 * 	- ingredientName (String)
+	 * 	- calories (Integer)
+	 * 	- carbs (Integer)
+	 * 	- fats (Integer)
+	 * 	- protein (Integer)
+	 */
+	@PostMapping("/api/ingredients")
+	public ResponseEntity<?> addIngredientById(@RequestBody IngredientsRequest ingredientsRequest, HttpServletRequest request) {
+
+		Connection conn = null;
+		boolean noFailures = true;
+		Integer ingredient_id = null;
+
+		try {
+			
+			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
+			conn.setAutoCommit(false);
+
+			/*
+			 * Add new row to ingredients table;
+			 */
+			
+			// 1.
+			// create the prepared statement for inserting into ingredients
+			String query = "INSERT INTO ingredients (ingredient_id, user_id, ingredient_name, calories, carbs, fats, protein) " +
+				"VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)";
+			PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+
+			// insert values into prepared statement
+			ps.setInt(1, Integer.parseInt((String) request.getSession().getAttribute("user_id")));
+			ps.setString(2, ingredientsRequest.getIngredientName());
+			ps.setInt(3, ingredientsRequest.getCalories());
+			ps.setInt(4, ingredientsRequest.getCarbs());
+			ps.setInt(5, ingredientsRequest.getFats());
+			ps.setInt(6, ingredientsRequest.getProtein());
+
+			// execute the query
+			ps.execute();
+
+			// get ingredient_id of newly inserted row
+			ResultSet rs = ps.getGeneratedKeys();
+			if (!rs.next()) {
+				return ResponseEntity.status(500).body("Could not get ingredient_id of newly inserted column");
+			}
+			ingredient_id = rs.getInt(1);
+
+			// cleanup
+			rs.close();
+			ps.close();
+			conn.commit();
+
+		} catch (SQLException e) {
+			noFailures = false;
+			System.out.println(e.getMessage());
+			e.printStackTrace(System.out);
+
+			// attempt to rollback if connection is not null
+			if (conn != null) {
+				try {
+					System.out.println("Attempting to rollback transaction.");
+					conn.rollback();
+				} catch (SQLException se) {
+					System.err.println("Failed to rollback.");
+					System.err.println(se.getMessage());
+				}
+			}
+		} finally {
+			// attempt to close connection if it is not null
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					System.err.println("Failed to close connection");
+					System.err.println(e.getMessage());
+				}
+			}
+		}
+
+		if (noFailures) {
+			HashMap<String, String> res_body = new HashMap<>();
+			res_body.put("ingredientId", ingredient_id.toString());
+			res_body.put("body", "Successfully added a new ingredient!");
+			return ResponseEntity.ok(res_body);
+		}
+		return ResponseEntity.status(400).body("bad request");
 	}
 
 	@PutMapping("/api/ingredients/{ingredientId}")
