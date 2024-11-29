@@ -1,45 +1,47 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from 'next/image'
 import Link from "next/link"
 import { useRouter } from 'next/navigation'
+import { loginSession, getClientSession } from '@/lib/actions'
 
 export default function page() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
+    const [errors, setErrors] = useState<string | null>(null);
     const router = useRouter()
+
+    useEffect(() => {
+        const checkSession = async () => {
+            const session = await getClientSession();
+            if (session.isLogged) {
+                router.push('/dashboard');
+            }
+        };
+
+        checkSession();
+    }, [router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        console.log('sign in with ', username, password)
+        console.log('sign in with', username, password)
 
         try {
-            const response = await fetch('http://localhost:8080/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username,
-                    password,
-                }),
-                credentials: 'include',
-            });
+            const message = await loginSession(username, password)
 
-            const message = await response.text();
-
-            if (response.ok) {
-                console.log('Login successful:', message);
-                router.push('/dashboard');
+            if (message) {
+                setErrors(message)
             } else {
-                console.error('Login failed:', message);
+                router.push('/dashboard');
             }
         } catch (error) {
             console.error('Error occurred while logging in:', error);
+            setErrors('An unexpected error occurred. Please try again.')
         }
+
     }
 
     return (
@@ -93,6 +95,7 @@ export default function page() {
                             Sign in
                         </Button>
                     </div>
+                    {errors && <p className="text-red-500 text-sm mt-1">{errors}</p>}
                 </form>
                 {/* <div className="text-center">
                     <Link href="/signup" className="text-sm font-medium text-teal-600 hover:text-teal-500">

@@ -1,5 +1,6 @@
 package com.example.foodapp;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -30,14 +31,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-
 @SpringBootApplication
 @RestController
 public class FoodappApplication {
 
-	static String JDBC_URL = "jdbc:postgresql://localhost:5432/food";
-	static String USERNAME = "postgres";
-	static String PASSWORD = "admin";
+	@Value("${spring.datasource.url}")
+	private String JDBC_URL;
+	@Value("${spring.datasource.username}")
+	private String USERNAME;
+	@Value("${spring.datasource.password}")
+	private String PASSWORD;
 
 	private final AuthenticationManager authenticationManager;
 
@@ -55,7 +58,6 @@ public class FoodappApplication {
 	 * 
 	 */
 
-	
 	@PostMapping("/api/auth/login")
 	public ResponseEntity<?> login(@RequestBody AuthRequest loginRequest, HttpServletRequest request) {
 		System.out.println(request.getSession().getId());
@@ -63,11 +65,9 @@ public class FoodappApplication {
 			SecurityContext securityContext = SecurityContextHolder.getContext();
 
 			securityContext.setAuthentication(this.authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(
-					loginRequest.getUsername(),
-					loginRequest.getPassword()
-				)
-			));
+					new UsernamePasswordAuthenticationToken(
+							loginRequest.getUsername(),
+							loginRequest.getPassword())));
 			Connection conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
 
 			// prepare query to get user_id
@@ -80,13 +80,13 @@ public class FoodappApplication {
 			// move cursor to first and only row
 			rs.next();
 
-			request.getSession().setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
+			request.getSession().setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+					securityContext);
 			request.getSession().setAttribute("username", loginRequest.getUsername());
 			request.getSession().setAttribute("user_id", rs.getString("user_id"));
 
 			return ResponseEntity.ok("Successfully Authenticated");
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			System.out.println(e);
 			return ResponseEntity.status(403).body("Something went wrong. Authentication Failed.");
 
@@ -99,8 +99,8 @@ public class FoodappApplication {
 			Class.forName("org.postgresql.Driver");
 			Connection conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
 
-			String insertNewUserQuery = "INSERT INTO users (user_id, username, password, enabled) " + 
-				"VALUES (DEFAULT, ?, ?, true)";
+			String insertNewUserQuery = "INSERT INTO users (user_id, username, password, enabled) " +
+					"VALUES (DEFAULT, ?, ?, true)";
 
 			PreparedStatement ps = conn.prepareStatement(insertNewUserQuery);
 
@@ -110,8 +110,15 @@ public class FoodappApplication {
 			ps.execute();
 
 			ps.close();
-			conn.close();
 
+			String insertAuthorityQuery = "INSERT INTO authorities (username, authority) " +
+					"VALUES (?, 'temp')";
+			PreparedStatement authorityStatement = conn.prepareStatement(insertAuthorityQuery);
+			authorityStatement.setString(1, registeRequest.getUsername());
+			authorityStatement.execute();
+			authorityStatement.close();
+
+			conn.close();
 			return ResponseEntity.ok("User successfully created!");
 
 		} catch (ClassNotFoundException e) {
@@ -165,7 +172,6 @@ public class FoodappApplication {
 			ps.setInt(1, Integer.parseInt((String) request.getSession().getAttribute("user_id")));
 			ResultSet rs = ps.executeQuery();
 
-
 			// iterate through ResultSet and append all meals to array
 			while (rs.next()) {
 				MealsResponse temp = new MealsResponse();
@@ -182,7 +188,7 @@ public class FoodappApplication {
 				ps2.setInt(1, rs.getInt("meal_id"));
 				ResultSet rs2 = ps2.executeQuery();
 
-				// add values to response body			
+				// add values to response body
 				while (rs2.next()) {
 					foodIds.add(Map.of(rs2.getInt("food_id"), rs2.getInt("quantity")));
 				}
@@ -207,8 +213,8 @@ public class FoodappApplication {
 			if (conn != null) {
 				try {
 					conn.close();
-	 			} catch (SQLException e) {
-					System.err.println("Failed to close connection");	
+				} catch (SQLException e) {
+					System.err.println("Failed to close connection");
 					System.err.println(e.getMessage());
 				}
 			}
@@ -220,7 +226,7 @@ public class FoodappApplication {
 		}
 		return ResponseEntity.status(400).body("bad request");
 	}
-	
+
 	@GetMapping("/api/meals/{mealId}")
 	public ResponseEntity<?> getMealById(@PathVariable Integer mealId, HttpServletRequest request) {
 		Connection conn = null;
@@ -282,8 +288,8 @@ public class FoodappApplication {
 			if (conn != null) {
 				try {
 					conn.close();
-	 			} catch (SQLException e) {
-					System.err.println("Failed to close connection");	
+				} catch (SQLException e) {
+					System.err.println("Failed to close connection");
 					System.err.println(e.getMessage());
 				}
 			}
@@ -301,10 +307,10 @@ public class FoodappApplication {
 
 	/*
 	 * Request Body must include these fields:
-	 * 	- mealName (String)
-	 * 	- date (String yyyy-mm-dd)
-	 * 	- mealType (String)
-	 *  - foodIds (Object mapping ID to quantity (Integer))
+	 * - mealName (String)
+	 * - date (String yyyy-mm-dd)
+	 * - mealType (String)
+	 * - foodIds (Object mapping ID to quantity (Integer))
 	 */
 	@PostMapping("/api/meals")
 	public ResponseEntity<?> addMealById(@RequestBody MealsRequest mealsRequest, HttpServletRequest request) {
@@ -319,7 +325,7 @@ public class FoodappApplication {
 		Integer meal_id = null;
 
 		try {
-			
+
 			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
 			conn.setAutoCommit(false);
 
@@ -327,11 +333,11 @@ public class FoodappApplication {
 			 * 1. Create meal in meals table
 			 * 2. Link meal to all assossiated foods in meal_foods table
 			 */
-			
+
 			// 1.
 			// create the prepared statement for inserting into meals
 			String query = "INSERT INTO meals (meal_id, user_id, meal_name, date, meal_type) " +
-				"VALUES (DEFAULT, ?, ?, ?, ?)";
+					"VALUES (DEFAULT, ?, ?, ?, ?)";
 			PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 
 			// insert values into prepared statement
@@ -355,8 +361,8 @@ public class FoodappApplication {
 			ps.close();
 
 			// 2.
-			query = "INSERT INTO meal_foods (meal_food_id, meal_id, food_id, quantity) " + 
-				"VALUES (DEFAULT, ?, ?, ?)";
+			query = "INSERT INTO meal_foods (meal_food_id, meal_id, food_id, quantity) " +
+					"VALUES (DEFAULT, ?, ?, ?)";
 			ps = conn.prepareStatement(query);
 
 			Map<Integer, Integer> foodIds = mealsRequest.getFoodIds();
@@ -394,8 +400,8 @@ public class FoodappApplication {
 			if (conn != null) {
 				try {
 					conn.close();
-	 			} catch (SQLException e) {
-					System.err.println("Failed to close connection");	
+				} catch (SQLException e) {
+					System.err.println("Failed to close connection");
 					System.err.println(e.getMessage());
 				}
 			}
@@ -412,20 +418,21 @@ public class FoodappApplication {
 
 	/*
 	 * Request Body must include these fields:
-	 * 	- mealName (String)
-	 * 	- date (String yyyy-mm-dd)
-	 * 	- mealType (String)
-	 *  - foodIds (Object mapping ID to quantity (Integer))
+	 * - mealName (String)
+	 * - date (String yyyy-mm-dd)
+	 * - mealType (String)
+	 * - foodIds (Object mapping ID to quantity (Integer))
 	 */
 	/*
 	 * Request Body must include these fields:
-	 * 	- mealName (String)
-	 * 	- date (String yyyy-mm-dd)
-	 * 	- mealType (String)
-	 *  - foodIds (Object mapping ID to quantity (Integer))
+	 * - mealName (String)
+	 * - date (String yyyy-mm-dd)
+	 * - mealType (String)
+	 * - foodIds (Object mapping ID to quantity (Integer))
 	 */
 	@PutMapping("/api/meals/{mealId}")
-	public ResponseEntity<?> updateMealById(@PathVariable Integer mealId, @RequestBody MealsRequest mealsRequest, HttpServletRequest request) {
+	public ResponseEntity<?> updateMealById(@PathVariable Integer mealId, @RequestBody MealsRequest mealsRequest,
+			HttpServletRequest request) {
 		// check if meal is linked to at least 1 food
 		if (mealsRequest.getFoodIds().size() < 1) {
 			return ResponseEntity.status(400).body("foodIds must be a non-empty list!");
@@ -435,7 +442,7 @@ public class FoodappApplication {
 		boolean noFailures = true;
 
 		try {
-			
+
 			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
 			conn.setAutoCommit(false);
 
@@ -443,12 +450,12 @@ public class FoodappApplication {
 			 * 1. Update meal in meals table with meal_id
 			 * 2. Update meal_foods
 			 */
-			
+
 			// 1.
 			// create the prepared statement for inserting into meals
-			String query = "UPDATE meals " + 
-				"SET meal_name = ?, date = ?, meal_type = ? " +
-				"WHERE meal_id = ?";
+			String query = "UPDATE meals " +
+					"SET meal_name = ?, date = ?, meal_type = ? " +
+					"WHERE meal_id = ?";
 			PreparedStatement ps = conn.prepareStatement(query);
 
 			// insert values into prepared statement
@@ -473,10 +480,9 @@ public class FoodappApplication {
 			deleteStmt.executeUpdate();
 			deleteStmt.close();
 
-
 			// re-INSERT all rows with new updated values
-			query = "INSERT INTO meal_foods (meal_food_id, meal_id, food_id, quantity) " + 
-				"VALUES (DEFAULT, ?, ?, ?)";
+			query = "INSERT INTO meal_foods (meal_food_id, meal_id, food_id, quantity) " +
+					"VALUES (DEFAULT, ?, ?, ?)";
 			ps = conn.prepareStatement(query);
 
 			Map<Integer, Integer> foodIds = mealsRequest.getFoodIds();
@@ -514,8 +520,8 @@ public class FoodappApplication {
 			if (conn != null) {
 				try {
 					conn.close();
-	 			} catch (SQLException e) {
-					System.err.println("Failed to close connection");	
+				} catch (SQLException e) {
+					System.err.println("Failed to close connection");
 					System.err.println(e.getMessage());
 				}
 			}
@@ -534,14 +540,15 @@ public class FoodappApplication {
 		boolean noFailures = true;
 
 		try {
-			
+
 			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
 			conn.setAutoCommit(false);
 
 			/*
-			 * Delete all rows with meal_id in meals (deletions will be cascaded to meal_foods table)
+			 * Delete all rows with meal_id in meals (deletions will be cascaded to
+			 * meal_foods table)
 			 */
-			
+
 			// create the prepared statement for inserting into meals
 			String query = "DELETE FROM meals WHERE user_id = ? AND meal_id = ?";
 			PreparedStatement ps = conn.prepareStatement(query);
@@ -578,8 +585,8 @@ public class FoodappApplication {
 			if (conn != null) {
 				try {
 					conn.close();
-	 			} catch (SQLException e) {
-					System.err.println("Failed to close connection");	
+				} catch (SQLException e) {
+					System.err.println("Failed to close connection");
 					System.err.println(e.getMessage());
 				}
 			}
@@ -619,7 +626,6 @@ public class FoodappApplication {
 			ps.setInt(1, Integer.parseInt((String) request.getSession().getAttribute("user_id")));
 			ResultSet rs = ps.executeQuery();
 
-
 			// iterate through ResultSet and append all foods to array
 			while (rs.next()) {
 				FoodsResponse temp = new FoodsResponse();
@@ -638,7 +644,7 @@ public class FoodappApplication {
 				ps2.setInt(1, rs.getInt("food_id"));
 				ResultSet rs2 = ps2.executeQuery();
 
-				// add values to response body			
+				// add values to response body
 				while (rs2.next()) {
 					ingredientIds.add(Map.of(rs2.getInt("ingredient_id"), rs2.getInt("quantity")));
 				}
@@ -663,8 +669,8 @@ public class FoodappApplication {
 			if (conn != null) {
 				try {
 					conn.close();
-	 			} catch (SQLException e) {
-					System.err.println("Failed to close connection");	
+				} catch (SQLException e) {
+					System.err.println("Failed to close connection");
 					System.err.println(e.getMessage());
 				}
 			}
@@ -676,7 +682,7 @@ public class FoodappApplication {
 		}
 		return ResponseEntity.status(400).body("bad request");
 	}
-	
+
 	@GetMapping("/api/foods/{foodId}")
 	public ResponseEntity<?> getFoodById(@PathVariable Integer foodId, HttpServletRequest request) {
 
@@ -700,7 +706,8 @@ public class FoodappApplication {
 			ps.setInt(2, foodId);
 			ResultSet rs = ps.executeQuery();
 
-			// if the query was successful, create Response object and fill it with appropriate info
+			// if the query was successful, create Response object and fill it with
+			// appropriate info
 			if (rs.next()) {
 				food = new FoodsResponse();
 				food.setFoodId(rs.getInt("food_id"));
@@ -718,7 +725,7 @@ public class FoodappApplication {
 				ps2.setInt(1, rs.getInt("food_id"));
 				ResultSet rs2 = ps2.executeQuery();
 
-				// add values to response body			
+				// add values to response body
 				while (rs2.next()) {
 					ingredientIds.add(Map.of(rs2.getInt("ingredient_id"), rs2.getInt("quantity")));
 				}
@@ -741,8 +748,8 @@ public class FoodappApplication {
 			if (conn != null) {
 				try {
 					conn.close();
-	 			} catch (SQLException e) {
-					System.err.println("Failed to close connection");	
+				} catch (SQLException e) {
+					System.err.println("Failed to close connection");
 					System.err.println(e.getMessage());
 				}
 			}
@@ -761,12 +768,12 @@ public class FoodappApplication {
 
 	/*
 	 * Request Body must include these fields:
-	 * 	- foodName (String)
-	 * 	- calories (Integer)
-	 * 	- carbs (Integer)
-	 * 	- fats (Integer)
-	 * 	- protein (Integer)
-	 *  - ingredientIds (Object mapping ID to quantity (Integer))
+	 * - foodName (String)
+	 * - calories (Integer)
+	 * - carbs (Integer)
+	 * - fats (Integer)
+	 * - protein (Integer)
+	 * - ingredientIds (Object mapping ID to quantity (Integer))
 	 */
 	@PostMapping("/api/foods")
 	public ResponseEntity<?> addFoodById(@RequestBody FoodsRequest foodsRequest, HttpServletRequest request) {
@@ -776,18 +783,19 @@ public class FoodappApplication {
 		Integer food_id = null;
 
 		try {
-			
+
 			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
 			conn.setAutoCommit(false);
 
 			/*
 			 * Add new row to food table;
 			 */
-			
+
+			// 1.
 			// create the prepared statement for inserting into meals
 			String query = "INSERT INTO foods (food_id, user_id, food_name, calories, carbs, fats, protein) " +
-				"VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)";
-			PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+					"VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)";
+			PreparedStatement ps = conn.prepareStatement(query);
 
 			// insert values into prepared statement
 			ps.setInt(1, Integer.parseInt((String) request.getSession().getAttribute("user_id")));
@@ -799,7 +807,6 @@ public class FoodappApplication {
 
 			// execute the query
 			ps.execute();
-
 
 			// get food_id of newly inserted row
 			ResultSet rs = ps.getGeneratedKeys();
@@ -813,8 +820,8 @@ public class FoodappApplication {
 			ps.close();
 
 			// 2.
-			query = "INSERT INTO food_ingredients (food_ingredient_id, food_id, ingredient_id, quantity) " + 
-				"VALUES (DEFAULT, ?, ?, ?)";
+			query = "INSERT INTO food_ingredients (food_ingredient_id, food_id, ingredient_id, quantity) " +
+					"VALUES (DEFAULT, ?, ?, ?)";
 			ps = conn.prepareStatement(query);
 
 			Map<Integer, Integer> ingredientIds = foodsRequest.getIngredientIds();
@@ -867,18 +874,18 @@ public class FoodappApplication {
 		return ResponseEntity.status(400).body("bad request");
 	}
 
-
 	/*
 	 * Request Body must include these fields:
-	 * 	- foodName (String)
-	 * 	- calories (Integer)
-	 * 	- carbs (Integer)
-	 * 	- fats (Integer)
-	 * 	- protein (Integer)
-	 *  - ingredientIds (Object mapping ID to quantity (Integer))
+	 * - foodName (String)
+	 * - calories (Integer)
+	 * - carbs (Integer)
+	 * - fats (Integer)
+	 * - protein (Integer)
+	 * - ingredientIds (Object mapping ID to quantity (Integer))
 	 */
 	@PutMapping("/api/foods/{foodId}")
-	public ResponseEntity<?> updateFoodById(@PathVariable Integer foodId, @RequestBody FoodsRequest foodsRequest, HttpServletRequest request) {
+	public ResponseEntity<?> updateFoodById(@PathVariable Integer foodId, @RequestBody FoodsRequest foodsRequest,
+			HttpServletRequest request) {
 		// check if food is linked to at least 1 ingredient
 		if (foodsRequest.getIngredientIds().size() < 1) {
 			return ResponseEntity.status(400).body("foodIds must be a non-empty list!");
@@ -888,7 +895,7 @@ public class FoodappApplication {
 		boolean noFailures = true;
 
 		try {
-			
+
 			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
 			conn.setAutoCommit(false);
 
@@ -896,12 +903,12 @@ public class FoodappApplication {
 			 * 1. Update food in foods table with food_id
 			 * 2. Update food_ingredients
 			 */
-			
+
 			// 1.
 			// create the prepared statement for inserting into meals
-			String query = "UPDATE foods " + 
-				"SET food_name = ?, calories = ?, carbs = ?, fats = ?, protein = ? " +
-				"WHERE food_id = ?";
+			String query = "UPDATE foods " +
+					"SET food_name = ?, calories = ?, carbs = ?, fats = ?, protein = ? " +
+					"WHERE food_id = ?";
 			PreparedStatement ps = conn.prepareStatement(query);
 
 			// insert values into prepared statement
@@ -929,8 +936,8 @@ public class FoodappApplication {
 			deleteStmt.close();
 
 			// re-INSERT all rows with new updated values
-			query = "INSERT INTO food_ingredients (food_ingredient_id, food_id, ingredient_id, quantity) " + 
-				"VALUES (DEFAULT, ?, ?, ?)";
+			query = "INSERT INTO food_ingredients (food_ingredient_id, food_id, ingredient_id, quantity) " +
+					"VALUES (DEFAULT, ?, ?, ?)";
 			ps = conn.prepareStatement(query);
 
 			Map<Integer, Integer> foodIds = foodsRequest.getIngredientIds();
@@ -968,8 +975,8 @@ public class FoodappApplication {
 			if (conn != null) {
 				try {
 					conn.close();
-	 			} catch (SQLException e) {
-					System.err.println("Failed to close connection");	
+				} catch (SQLException e) {
+					System.err.println("Failed to close connection");
 					System.err.println(e.getMessage());
 				}
 			}
@@ -988,14 +995,15 @@ public class FoodappApplication {
 		boolean noFailures = true;
 
 		try {
-			
+
 			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
 			conn.setAutoCommit(false);
 
 			/*
-			 * Delete all rows with meal_id in meals (deletions will be cascaded to meal_foods table)
+			 * Delete all rows with meal_id in meals (deletions will be cascaded to
+			 * meal_foods table)
 			 */
-			
+
 			// create the prepared statement for inserting into meals
 			String query = "DELETE FROM foods WHERE user_id = ? AND food_id = ?";
 			PreparedStatement ps = conn.prepareStatement(query);
@@ -1032,8 +1040,8 @@ public class FoodappApplication {
 			if (conn != null) {
 				try {
 					conn.close();
-	 			} catch (SQLException e) {
-					System.err.println("Failed to close connection");	
+				} catch (SQLException e) {
+					System.err.println("Failed to close connection");
 					System.err.println(e.getMessage());
 				}
 			}
@@ -1044,7 +1052,7 @@ public class FoodappApplication {
 		}
 		return ResponseEntity.status(400).body("bad request");
 	}
-	
+
 	/**
 	 * /api/ingredients endpoints
 	 * 
@@ -1055,41 +1063,42 @@ public class FoodappApplication {
 	public String getAllIngredients() {
 		return new String();
 	}
-	
+
 	@GetMapping("/api/ingredients/{ingredientId}")
 	public String getIngredientById(@PathVariable Integer ingredientId) {
 		return new String();
 	}
 
-
 	/*
 	 * Request Body must include these fields:
-	 * 	- ingredientName (String)
-	 * 	- calories (Integer)
-	 * 	- carbs (Integer)
-	 * 	- fats (Integer)
-	 * 	- protein (Integer)
+	 * - ingredientName (String)
+	 * - calories (Integer)
+	 * - carbs (Integer)
+	 * - fats (Integer)
+	 * - protein (Integer)
 	 */
 	@PostMapping("/api/ingredients")
-	public ResponseEntity<?> addIngredientById(@RequestBody IngredientsRequest ingredientsRequest, HttpServletRequest request) {
+	public ResponseEntity<?> addIngredientById(@RequestBody IngredientsRequest ingredientsRequest,
+			HttpServletRequest request) {
 
 		Connection conn = null;
 		boolean noFailures = true;
 		Integer ingredient_id = null;
 
 		try {
-			
+
 			conn = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
 			conn.setAutoCommit(false);
 
 			/*
 			 * Add new row to ingredients table;
 			 */
-			
+
 			// 1.
 			// create the prepared statement for inserting into ingredients
-			String query = "INSERT INTO ingredients (ingredient_id, user_id, ingredient_name, calories, carbs, fats, protein) " +
-				"VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)";
+			String query = "INSERT INTO ingredients (ingredient_id, user_id, ingredient_name, calories, carbs, fats, protein) "
+					+
+					"VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)";
 			PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 
 			// insert values into prepared statement
@@ -1170,7 +1179,7 @@ public class FoodappApplication {
 	public String getDailyAnalysis() {
 		return "TODO";
 	}
-	
+
 	@Bean
 	public PasswordEncoder getPasswordEncoder() {
 		return NoOpPasswordEncoder.getInstance();
