@@ -1,15 +1,17 @@
 import Link from "next/link"
 import { UtensilsCrossed, Heart, ChefHat, Salad } from 'lucide-react'
 import { Card } from "@/components/ui/card"
-import { getSession } from "@/lib/actions"
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 export default async function page() {
-    const session = await getSession()
+    const allCookies = cookies();
+    const sessionCookie = allCookies.get("JSESSIONID");
 
-    if (!session.isLogged) {
-        redirect('/signin')
+    if (!sessionCookie) {
+        redirect('/signin');
     }
+
 
     return (
         <div className="min-h-screen bg-[#e0f4e8]">
@@ -18,7 +20,7 @@ export default async function page() {
                     What would you like to do?
                 </h1>
                 <div className="grid gap-6 md:grid-rows-auto max-w-4xl mx-auto">
-                    <Link href="/logMeals">
+                    <Link href="/meals">
                         <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer bg-white border-4 border-[#F4E0EC]">
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="p-3 rounded-full bg-[#f0f9f6]">
