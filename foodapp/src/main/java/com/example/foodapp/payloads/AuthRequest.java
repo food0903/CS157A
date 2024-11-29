@@ -1,6 +1,6 @@
-package com.example.foodapp;
+package com.example.foodapp.payloads;
 
-public class LoginRequest {
+public class AuthRequest {
 
     private String username;
     private String password;
