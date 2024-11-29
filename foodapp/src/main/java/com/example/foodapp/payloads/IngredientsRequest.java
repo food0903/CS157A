@@ -1,25 +1,24 @@
 package com.example.foodapp.payloads;
 
-import java.util.Map;
 
-public class FoodsRequest {
+public class IngredientsRequest {
 
-    private String foodName;
+    private String ingredientName;
     private Integer calories;
     private Integer carbs;
     private Integer fats;
     private Integer protein;
-    private Map<Integer, Integer> ingredientIds; 
 
-    public String getFoodName() {
-        return this.foodName;
+    public String getIngredientName() {
+        return ingredientName;
     }
-    public void setFoodName(String foodName) {
-        this.foodName = foodName;
+
+    public void setIngredientName(String ingredientName) {
+        this.ingredientName = ingredientName;
     }
 
     public Integer getCalories() {
-        return this.calories;
+        return calories;
     }
 
     public void setCalories(Integer calories) {
@@ -27,7 +26,7 @@ public class FoodsRequest {
     }
 
     public Integer getCarbs() {
-        return this.carbs;
+        return carbs;
     }
 
     public void setCarbs(Integer carbs) {
@@ -35,7 +34,7 @@ public class FoodsRequest {
     }
 
     public Integer getFats() {
-        return this.fats;
+        return fats;
     }
 
     public void setFats(Integer fats) {
@@ -43,19 +42,10 @@ public class FoodsRequest {
     }
 
     public Integer getProtein() {
-        return this.protein;
+        return protein;
     }
 
     public void setProtein(Integer protein) {
         this.protein = protein;
     }
-    
-    public Map<Integer, Integer> getIngredientIds() {
-        return this.ingredientIds;
-    }
-
-    public void setIngredientIds(Map<Integer, Integer> ingredientIds) {
-        this.ingredientIds = ingredientIds;
-    }
-
 }

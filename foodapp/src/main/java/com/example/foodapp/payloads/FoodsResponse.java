@@ -1,25 +1,36 @@
 package com.example.foodapp.payloads;
 
+import java.util.List;
 import java.util.Map;
 
-public class FoodsRequest {
+public class FoodsResponse {
 
+    private Integer foodId;
     private String foodName;
     private Integer calories;
     private Integer carbs;
     private Integer fats;
     private Integer protein;
-    private Map<Integer, Integer> ingredientIds; 
+    private List<Map<Integer, Integer>> ingredientsIds;
+
+    public Integer getFoodId() {
+        return foodId;
+    }
+
+    public void setFoodId(Integer foodId) {
+        this.foodId = foodId;
+    }
 
     public String getFoodName() {
-        return this.foodName;
+        return foodName;
     }
+
     public void setFoodName(String foodName) {
         this.foodName = foodName;
     }
 
     public Integer getCalories() {
-        return this.calories;
+        return calories;
     }
 
     public void setCalories(Integer calories) {
@@ -27,7 +38,7 @@ public class FoodsRequest {
     }
 
     public Integer getCarbs() {
-        return this.carbs;
+        return carbs;
     }
 
     public void setCarbs(Integer carbs) {
@@ -35,7 +46,7 @@ public class FoodsRequest {
     }
 
     public Integer getFats() {
-        return this.fats;
+        return fats;
     }
 
     public void setFats(Integer fats) {
@@ -43,19 +54,19 @@ public class FoodsRequest {
     }
 
     public Integer getProtein() {
-        return this.protein;
+        return protein;
     }
 
     public void setProtein(Integer protein) {
         this.protein = protein;
     }
-    
-    public Map<Integer, Integer> getIngredientIds() {
-        return this.ingredientIds;
+
+    public List<Map<Integer, Integer>> getIngredientsIds() {
+        return ingredientsIds;
     }
 
-    public void setIngredientIds(Map<Integer, Integer> ingredientIds) {
-        this.ingredientIds = ingredientIds;
+    public void setIngredientsIds(List<Map<Integer, Integer>> ingredientsIds) {
+        this.ingredientsIds = ingredientsIds;
     }
-
 }
+
