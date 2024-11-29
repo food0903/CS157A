@@ -5,14 +5,41 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from 'next/image'
 import Link from "next/link"
+import { useRouter } from 'next/navigation'
 
 export default function page() {
-    const [email, setEmail] = useState('')
+    const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
+    const router = useRouter()
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        console.log('Login attempted with:', email, password)
+        console.log('sign in with ', username, password)
+
+        try {
+            const response = await fetch('http://localhost:8080/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    password,
+                }),
+                credentials: 'include',
+            });
+
+            const message = await response.text();
+
+            if (response.ok) {
+                console.log('Login successful:', message);
+                router.push('/dashboard');
+            } else {
+                console.error('Login failed:', message);
+            }
+        } catch (error) {
+            console.error('Error occurred while logging in:', error);
+        }
     }
 
     return (
@@ -32,17 +59,17 @@ export default function page() {
                 <form onSubmit={handleSubmit} className="mt-8 space-y-6">
                     <div className="space-y-4">
                         <div>
-                            <Label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Email
+                            <Label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                                Username
                             </Label>
                             <Input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                id="username"
+                                type="username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                                 required
                                 className="mt-1 block w-full rounded-full border-teal-300 focus:border-teal-500 focus:ring-teal-500"
-                                placeholder="Enter your email"
+                                placeholder="Enter your username"
                             />
                         </div>
                         <div>
