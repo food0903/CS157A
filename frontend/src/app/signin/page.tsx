@@ -5,37 +5,34 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from 'next/image'
 import Link from "next/link"
-import { useRouter } from 'next/navigation'
-import { loginSession, getClientSession } from '@/lib/actions'
 
 export default function page() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [errors, setErrors] = useState<string | null>(null);
-    const router = useRouter()
-
-    useEffect(() => {
-        const checkSession = async () => {
-            const session = await getClientSession();
-            if (session.isLogged) {
-                router.push('/dashboard');
-            }
-        };
-
-        checkSession();
-    }, [router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         console.log('sign in with', username, password)
-
         try {
-            const message = await loginSession(username, password)
+            const res = await fetch('http://localhost:8080/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    password,
+                }),
+                credentials: 'include',
+            });
 
-            if (message) {
-                setErrors(message)
+            if (res.ok) {
+                console.log('Login successful:', res);
+                location.href = '/dashboard';
             } else {
-                router.push('/dashboard');
+                console.error('Login failed:', res);
+                setErrors('An unexpected error occurred. Please try again.')
             }
         } catch (error) {
             console.error('Error occurred while logging in:', error);
