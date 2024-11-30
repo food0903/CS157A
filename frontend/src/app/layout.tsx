@@ -38,7 +38,7 @@ export default async function RootLayout({
       >
         <div className="min-h-screen bg-[#e0f4e8]">
           <header className="px-4 lg:px-6 h-24 flex items-center justify-between">
-            <Link className="flex items-center justify-center" href="/">
+            <Link className="flex items-center justify-center" href={sessionCookie ? "/dashboard" : "/"}>
               <Image
                 src="/images/boba.png"
                 alt="food logo"
