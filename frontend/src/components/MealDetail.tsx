@@ -13,6 +13,7 @@ interface Food {
     protein: number | null;
     fats: number | null;
     quantity: number;
+
 }
 
 interface FoodId {
@@ -102,6 +103,7 @@ export function MealDetail({ mealId, isOpen, onClose }: MealDetailsModalProps) {
     if (!meal) {
         return null;
     }
+
 
     const totalCalories = foodList.reduce((sum, food) => sum + food.calories * food.quantity, 0);
     const totalCarbs = foodList.reduce((sum, food) => sum + (food.carbs ?? 0) * food.quantity, 0);
