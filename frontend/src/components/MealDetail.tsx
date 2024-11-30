@@ -12,6 +12,7 @@ interface Food {
     carbs: number | null;
     protein: number | null;
     fats: number | null;
+    quantity: number;
 }
 
 interface FoodId {
@@ -102,11 +103,10 @@ export function MealDetail({ mealId, isOpen, onClose }: MealDetailsModalProps) {
         return null;
     }
 
-    const totalCalories = foodList.reduce((sum, food) => sum + food.calories, 0);
-    const totalCarbs = foodList.reduce((sum, food) => sum + (food.carbs ?? 0), 0);
-    const totalProtein = foodList.reduce((sum, food) => sum + (food.protein ?? 0), 0);
-    const totalFats = foodList.reduce((sum, food) => sum + (food.fats ?? 0), 0);
-
+    const totalCalories = foodList.reduce((sum, food) => sum + food.calories * food.quantity, 0);
+    const totalCarbs = foodList.reduce((sum, food) => sum + (food.carbs ?? 0) * food.quantity, 0);
+    const totalProtein = foodList.reduce((sum, food) => sum + (food.protein ?? 0) * food.quantity, 0);
+    const totalFats = foodList.reduce((sum, food) => sum + (food.fats ?? 0) * food.quantity, 0);
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[600px]">
