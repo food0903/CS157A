@@ -1,8 +1,5 @@
 package com.example.foodapp.payloads;
 
-import java.util.List;
-import java.util.Map;
-
 public class FoodsResponse {
 
     private Integer foodId;
@@ -11,7 +8,6 @@ public class FoodsResponse {
     private Integer carbs;
     private Integer fats;
     private Integer protein;
-    private List<Map<Integer, Integer>> ingredientsIds;
 
     public Integer getFoodId() {
         return foodId;
@@ -61,12 +57,5 @@ public class FoodsResponse {
         this.protein = protein;
     }
 
-    public List<Map<Integer, Integer>> getIngredientsIds() {
-        return ingredientsIds;
-    }
-
-    public void setIngredientsIds(List<Map<Integer, Integer>> ingredientsIds) {
-        this.ingredientsIds = ingredientsIds;
-    }
 }
 
