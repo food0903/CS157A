@@ -3,9 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Image from "next/image";
 import Link from "next/link";
-import { getSession, logoutSession } from "@/lib/actions";
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { cookies } from "next/headers";
+import LogoutButton from "@/components/logoutButton";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,9 +27,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getSession();
+  const allCookies = cookies();
+  const sessionCookie = allCookies.get("JSESSIONID");
 
-  console.log(session);
   return (
     <html lang="en">
       <body
@@ -38,20 +37,19 @@ export default async function RootLayout({
       >
         <div className="min-h-screen bg-[#e0f4e8]">
           <header className="px-4 lg:px-6 h-24 flex items-center justify-between">
-            <Link className="flex items-center justify-center" href="/">
-              <Image src="/images/boba.png"
+            <Link className="flex items-center justify-center" href={sessionCookie ? "/dashboard" : "/"}>
+              <Image
+                src="/images/boba.png"
                 alt="food logo"
                 className="mx-auto"
                 width={120}
-                height={120} />
-              <div className="ml-2 text-xl font-semibold text-teal-800">MealTracker</div>
+                height={120}
+              />
+              <div className="ml-2 text-xl font-semibold text-teal-800">
+                MealTracker
+              </div>
             </Link>
-            {session.isLogged &&
-              <form action={logoutSession}>
-                <Button variant="outline" className="text-teal-800 border-teal-800 hover:bg-teal-100">
-                  <LogOut className="mr-2 h-4 w-4" /> Logout
-                </Button>
-              </form>}
+            {sessionCookie && <LogoutButton />}
           </header>
           <main className="content">{children}</main>
         </div>

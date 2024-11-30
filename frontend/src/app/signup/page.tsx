@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useRouter } from 'next/navigation'
 import { registerSession, getClientSession } from '@/lib/actions'
 
+
 export default function page() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
@@ -26,7 +27,6 @@ export default function page() {
         checkSession();
     }, [router]);
 
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         console.log('sigup with ', username, password, passwordCheck)
@@ -44,7 +44,51 @@ export default function page() {
             console.error('Error occurred while signing up:', error)
             setErrors('An unexpected error occurred. Please try again.')
         }
+        if (password !== passwordCheck) {
+            setErrors('Passwords do not match')
+            return
+        }
 
+        try {
+            const res = await fetch('http://localhost:8080/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    password,
+                }),
+            });
+            if (res.ok) {
+                const loginResponse = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                    }),
+                    credentials: 'include',
+                })
+                if (loginResponse.ok) {
+                    console.log('Login successful:', loginResponse);
+                    location.href = '/dashboard';
+                } else {
+                    console.error('Login failed:', loginResponse);
+                    setErrors('An unexpected error occurred. Please try again.')
+                }
+            } else {
+                const message = await res.text();
+                console.error('Signup failed:', message);
+                setErrors(message)
+            }
+        } catch (error) {
+            console.error('Error occurred while signing up:', error);
+            setErrors('An unexpected error occurred. Please try again.')
+
+        }
     }
 
     return (

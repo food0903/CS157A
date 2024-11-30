@@ -1,5 +1,6 @@
 package com.example.foodapp;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -37,7 +38,6 @@ public class FoodappApplication {
 	private String JDBC_URL = ;
 	private String USERNAME = ;
 	private String PASSWORD = ;
-
 	private final AuthenticationManager authenticationManager;
 
 	public FoodappApplication(AuthenticationManager authenticationManager) {
@@ -692,7 +692,7 @@ public class FoodappApplication {
 				food.setCalories(rs.getInt("calories"));
 				food.setCarbs(rs.getInt("carbs"));
 				food.setFats(rs.getInt("fats"));
-				food.setProtein(rs.getInt("protein"));
+				food.setProtein(rs.getInt("protein")
 			}
 
 			rs.close();
@@ -754,6 +754,7 @@ public class FoodappApplication {
 			String query = "INSERT INTO foods (food_id, user_id, food_name, calories, carbs, fats, protein) " +
 					"VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)";
 			PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+
 
 			// insert values into prepared statement
 			ps.setInt(1, Integer.parseInt((String) request.getSession().getAttribute("user_id")));
@@ -825,6 +826,7 @@ public class FoodappApplication {
 	@PutMapping("/api/foods/{foodId}")
 	public ResponseEntity<?> updateFoodById(@PathVariable Integer foodId, @RequestBody FoodsRequest foodsRequest, HttpServletRequest request) {
 
+
 		Connection conn = null;
 		boolean noFailures = true;
 
@@ -836,7 +838,6 @@ public class FoodappApplication {
 			/*
 			 *  Update food in foods table with food_id
 			 */
-
 
 			// create the prepared statement for inserting into meals
 			String query = "UPDATE foods " +
@@ -857,6 +858,7 @@ public class FoodappApplication {
 
 			// cleanup
 			ps.close();
+
 			conn.commit();
 
 		} catch (SQLException e) {

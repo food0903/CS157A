@@ -28,14 +28,25 @@ export default function page() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         console.log('sign in with', username, password)
-
         try {
-            const message = await loginSession(username, password)
+            const res = await fetch('http://localhost:8080/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    password,
+                }),
+                credentials: 'include',
+            });
 
-            if (message) {
-                setErrors(message)
+            if (res.ok) {
+                console.log('Login successful:', res);
+                location.href = '/dashboard';
             } else {
-                router.push('/dashboard');
+                console.error('Login failed:', res);
+                setErrors('An unexpected error occurred. Please try again.')
             }
         } catch (error) {
             console.error('Error occurred while logging in:', error);

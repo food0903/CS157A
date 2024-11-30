@@ -1,9 +1,12 @@
-'use client'
 import { Button } from "@/components/ui/button"
 import { Utensils, Heart, ChefHat, ArrowRight } from 'lucide-react'
 import Link from "next/link"
+import { cookies } from "next/headers";
 
 export default function LandingPage() {
+  const allCookies = cookies();
+  const sessionCookie = allCookies.get("JSESSIONID");
+
   return (
     <div className="bg-[#e0f4e8] min-h-screen flex items-center justify-center">
       <main className="w-full px-4 py-12 md:py-24">
@@ -16,7 +19,7 @@ export default function LandingPage() {
               <p className="max-w-[700px] text-gray-600 md:text-xl">
                 Track your meals and nutrition with ease
               </p>
-              <Link href="/signup">
+              <Link href={sessionCookie ? "/dashboard" : "/signin"}>
                 <Button className="w-full md:w-auto bg-teal-500 hover:bg-[#BAE7CC] text-white px-8 py-3 text-lg">
                   Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
