@@ -30,7 +30,6 @@ export default async function RootLayout({
   const allCookies = cookies();
   const sessionCookie = allCookies.get("JSESSIONID");
 
-
   return (
     <html lang="en">
       <body

@@ -1,7 +1,5 @@
 package com.example.foodapp.payloads;
 
-import java.util.Map;
-
 public class FoodsRequest {
 
     private String foodName;
@@ -9,7 +7,6 @@ public class FoodsRequest {
     private Integer carbs;
     private Integer fats;
     private Integer protein;
-    private Map<Integer, Integer> ingredientIds; 
 
     public String getFoodName() {
         return this.foodName;
@@ -48,14 +45,6 @@ public class FoodsRequest {
 
     public void setProtein(Integer protein) {
         this.protein = protein;
-    }
-    
-    public Map<Integer, Integer> getIngredientIds() {
-        return this.ingredientIds;
-    }
-
-    public void setIngredientIds(Map<Integer, Integer> ingredientIds) {
-        this.ingredientIds = ingredientIds;
     }
 
 }

@@ -29,26 +29,9 @@ CREATE TABLE foods (
 	protein INTEGER NOT NULL
 );
 
-CREATE TABLE ingredients (
-	ingredient_id SERIAL PRIMARY KEY,
-	user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
-	ingredient_name VARCHAR(500),
-	calories INTEGER NOT NULL,
-	carbs INTEGER NOT NULL,
-	fats INTEGER NOT NULL,
-	protein INTEGER NOT NULL
-);
-
 CREATE TABLE meal_foods (
 	meal_food_id SERIAL PRIMARY KEY,
 	meal_id INTEGER REFERENCES meals(meal_id) ON DELETE CASCADE,
 	food_id INTEGER REFERENCES foods(food_id) ON DELETE CASCADE,
-	quantity INTEGER NOT NULL
-);
-
-CREATE TABLE food_ingredients (
-	food_ingredient_id SERIAL PRIMARY KEY,
-	food_id INTEGER REFERENCES foods(food_id) ON DELETE CASCADE,
-	ingredient_id INTEGER REFERENCES ingredients(ingredient_id) ON DELETE CASCADE,
 	quantity INTEGER NOT NULL
 );

@@ -1,15 +1,29 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from 'next/image'
 import Link from "next/link"
+import { useRouter } from 'next/navigation'
+import { loginSession, getClientSession } from '@/lib/actions'
 
 export default function page() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [errors, setErrors] = useState<string | null>(null);
+    const router = useRouter()
+
+    useEffect(() => {
+        const checkSession = async () => {
+            const session = await getClientSession();
+            if (session.isLogged) {
+                router.push('/dashboard');
+            }
+        };
+
+        checkSession();
+    }, [router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
