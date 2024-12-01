@@ -192,10 +192,14 @@ export function MealForm({ onClose }: { onClose: () => void }) {
                         <Controller
                             control={control}
                             name={`food_items.${index}.food_id`}
+                            rules={{ required: 'Food selection is required' }}
                             render={({ field }) => (
                                 <Select onValueChange={field.onChange} value={field.value}>
                                     <SelectTrigger className="flex-grow">
-                                        <SelectValue placeholder="Select food" />
+                                        <SelectValue placeholder={
+                                            availableFoods.length > 0
+                                                ? "Select food"
+                                                : "No food item logged. Go back to dashboard and log your food first!"} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {availableFoods.map((food) => (
@@ -209,11 +213,11 @@ export function MealForm({ onClose }: { onClose: () => void }) {
                         />
                         <Input
                             type="number"
-                            {...register(`food_items.${index}.quantity` as const, { valueAsNumber: true })}
+                            {...register(`food_items.${index}.quantity` as const, { valueAsNumber: true, required: 'Quantity is required', min: { value: 1, message: 'Quantity must be at least 1' } })}
                             className="w-20"
                             min={1}
                         />
-                        <Button type="button" variant="outline" size="icon" onClick={() => remove(index)}>
+                        <Button type="button" variant="outline" size="icon" onClick={() => remove(index)} disabled={fields.length === 1}>
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>
