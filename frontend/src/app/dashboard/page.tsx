@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { UtensilsCrossed, Heart, ChefHat, Salad } from 'lucide-react'
+import { UtensilsCrossed, Heart, Salad } from 'lucide-react'
 import { Card } from "@/components/ui/card"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"

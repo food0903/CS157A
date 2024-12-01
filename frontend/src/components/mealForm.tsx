@@ -38,7 +38,6 @@ interface FoodsResponse {
     carbs: number | null;
     fats: number | null;
     protein: number | null;
-    ingredientsIds: { [ingredientId: string]: number };
 }
 
 export function MealForm({ onClose }: { onClose: () => void }) {
@@ -125,13 +124,13 @@ export function MealForm({ onClose }: { onClose: () => void }) {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-                <Label htmlFor="meal_name">Meal Name</Label>
+                <Label htmlFor="meal_name" className='font-bold'>Meal Name</Label>
                 <Input id="meal_name" {...register('meal_name')} className="mt-1" />
                 {errors.meal_name && <p className="text-red-500 text-sm mt-1">{errors.meal_name.message}</p>}
             </div>
 
             <div>
-                <Label htmlFor="date">Date</Label>
+                <Label htmlFor="date" className='font-bold'>Date</Label>
                 <Controller
                     control={control}
                     name="date"
@@ -164,7 +163,7 @@ export function MealForm({ onClose }: { onClose: () => void }) {
             </div>
 
             <div>
-                <Label htmlFor="meal_type">Meal Type</Label>
+                <Label htmlFor="meal_type" className='font-bold'>Meal Type</Label>
                 <Controller
                     control={control}
                     name="meal_type"
@@ -186,7 +185,7 @@ export function MealForm({ onClose }: { onClose: () => void }) {
             </div>
 
             <div>
-                <Label>Food Items</Label>
+                <Label className='font-bold'>Food Items</Label>
                 {fields.map((field, index) => (
                     <div key={field.id} className="flex items-center space-x-2 mt-2">
                         <Controller
@@ -225,7 +224,7 @@ export function MealForm({ onClose }: { onClose: () => void }) {
                 <Button
                     type="button"
                     onClick={() => append({ food_id: '', quantity: 1 })}
-                    className="mt-2"
+                    className="mt-2 bg-emerald-600 hover:bg-emerald-700"
                 >
                     <Plus className="mr-2 h-4 w-4" /> Add Food Item
                 </Button>
@@ -236,7 +235,7 @@ export function MealForm({ onClose }: { onClose: () => void }) {
 
             <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                <Button type="submit">Create Meal</Button>
+                <Button type="submit" className='bg-[#a5aeff] hover:bg-[#5d6dff]'>Create Meal</Button>
             </div>
         </form>
     )
