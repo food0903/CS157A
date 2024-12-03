@@ -692,7 +692,7 @@ public class FoodappApplication {
 				food.setCalories(rs.getInt("calories"));
 				food.setCarbs(rs.getInt("carbs"));
 				food.setFats(rs.getInt("fats"));
-				food.setProtein(rs.getInt("protein")
+				food.setProtein(rs.getInt("protein"));
 			}
 
 			rs.close();
