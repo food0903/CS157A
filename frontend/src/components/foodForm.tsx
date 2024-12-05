@@ -69,7 +69,7 @@ export function FoodForm({ food, onClose, onSubmit }: FoodFormProps) {
     }
 
     return (
-        <Card className="bg-white shadow-lg border border-[#F4E0EC] border-4">
+        <Card className="bg-white shadow-lg border-[#F4E0EC] border-4">
             <CardContent className="p-6">
                 <form onSubmit={handleSubmit(onSubmitHandler)} className="space-y-6">
                     <div>
