@@ -14,9 +14,9 @@ CREATE TABLE authorities (
 CREATE TABLE meals (
 	meal_id SERIAL PRIMARY KEY,
 	user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
-	meal_name VARCHAR(500),
+	meal_name VARCHAR(500) NOT NULL,
 	date DATE NOT NULL,
-	meal_type VARCHAR(20)
+	meal_type VARCHAR(20) NOT NULL
 );
 
 CREATE TABLE foods (
