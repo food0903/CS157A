@@ -30,7 +30,7 @@ mvn spring-boot:run
 4. The backend should be hosted locally on http://localhost:8080
 
 
-## How to setup the Frontend
+## How to Setup and Run the Frontend
 ### Prerequisites
 - Node.js installed
 
