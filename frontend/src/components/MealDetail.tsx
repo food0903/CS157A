@@ -24,7 +24,7 @@ interface FoodId {
 interface Meal {
     mealId: number;
     userId: number;
-    mealName?: string;
+    mealName: string;
     mealType: string;
     date: string;
     foodsIds: FoodId[];
@@ -144,7 +144,7 @@ export function MealDetail({ mealId, isOpen, onClose }: MealDetailsModalProps) {
                             <TableBody>
                                 {foodList.map((food) => (
                                     <TableRow key={food.foodId}>
-                                        <TableCell>{food.foodName}</TableCell>
+                                        <TableCell>{food.foodName} {food.quantity ? `(x${food.quantity})` : ""}</TableCell>
                                         <TableCell>{food.calories}</TableCell>
                                         <TableCell>{food.carbs !== null && food.carbs !== undefined ? food.carbs : "N/A"}</TableCell>
                                         <TableCell>{food.protein !== null && food.protein !== undefined ? food.protein : "N/A"}</TableCell>

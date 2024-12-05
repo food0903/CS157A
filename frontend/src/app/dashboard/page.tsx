@@ -48,7 +48,7 @@ export default async function page() {
                     </Link>
 
 
-                    <Link href="/trackNutrition">
+                    {/* <Link href="/trackNutrition">
                         <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer bg-white border-4 border-[#F4E0EC]">
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="p-3 rounded-full bg-[#f0f9f6]">
@@ -60,7 +60,7 @@ export default async function page() {
                                 </p>
                             </div>
                         </Card>
-                    </Link>
+                    </Link> */}
                 </div>
             </div>
         </div>

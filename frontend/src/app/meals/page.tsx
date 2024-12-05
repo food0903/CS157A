@@ -6,8 +6,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PlusCircle, UtensilsCrossed, Pencil, Trash2, Info } from 'lucide-react'
 import { MealForm } from "@/components/mealForm"
 import { MealDetail } from "@/components/MealDetail"
+import { MealFormUpdate } from '@/components/mealFormUpdate'
 
-interface Food {
+interface FoodIds {
     foodId: number;
     foodName: string;
     quantity: number;
@@ -20,16 +21,17 @@ interface Food {
 interface Meal {
     mealId: number;
     userId: number;
-    mealName?: string;
+    mealName: string;
     mealType: string;
     date: string;
-    foods: Food[];
+    foodIds: FoodIds[];
 }
 
 export default function MealsPage() {
     const [meals, setMeals] = useState<Meal[]>([])
     const [error, setError] = useState<string | null>(null);
     const [showMealForm, setShowMealForm] = useState(false);
+    const [showMealUpdate, setShowMealUpdate] = useState(false);
     const [selectedMealId, setSelectedMealId] = useState<number | null>(null);
     const [showMealDetails, setShowMealDetails] = useState(false);
 
@@ -83,7 +85,8 @@ export default function MealsPage() {
     };
 
     const handleUpdate = (id: number) => {
-        // Placeholder for update functionality
+        setShowMealUpdate(true);
+        setSelectedMealId(id);
         console.log(`Update meal with id: ${id}`)
     }
 
@@ -115,6 +118,12 @@ export default function MealsPage() {
             </div>
             {showMealForm ? (
                 <MealForm onClose={() => setShowMealForm(false)} />
+            ) : showMealUpdate ? (
+                <MealFormUpdate
+                    meal={meals.find(meal => meal.mealId === selectedMealId)!}
+                    onClose={() => setShowMealUpdate(false)}
+                    onSubmit={fetchMeals}
+                />
             ) : meals.length > 0 ? (
                 <div className="space-y-4">
                     {meals.map((meal) => (
