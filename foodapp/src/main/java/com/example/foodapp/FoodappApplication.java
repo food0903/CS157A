@@ -35,12 +35,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 public class FoodappApplication {
 
-	@Value("${spring.datasource.url}")
-	private String JDBC_URL;
-	@Value("${spring.datasource.username}")
-	private String USERNAME;
-	@Value("${spring.datasource.password}")
-	private String PASSWORD;
+	private String JDBC_URL = ;
+	private String USERNAME = ;
+	private String PASSWORD = ;
 
 	private final AuthenticationManager authenticationManager;
 
