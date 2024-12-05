@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { UtensilsCrossed, Heart, ChefHat, Salad } from 'lucide-react'
+import { UtensilsCrossed, Heart, Salad } from 'lucide-react'
 import { Card } from "@/components/ui/card"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
@@ -33,7 +33,7 @@ export default async function page() {
                         </Card>
                     </Link>
 
-                    <Link href="/LogDish">
+                    <Link href="/foods">
                         <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer bg-white border-4 border-[#F4E0EC]">
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="p-3 rounded-full bg-[#f0f9f6]">
@@ -41,27 +41,14 @@ export default async function page() {
                                 </div>
                                 <h2 className="text-xl font-semibold text-[#7c85d1]">Log Dish</h2>
                                 <p className="text-center text-muted-foreground">
-                                    Log your favorite dishes
+                                    Log your favorite foods!
                                 </p>
                             </div>
                         </Card>
                     </Link>
 
-                    <Link href="/logIngredient">
-                        <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer bg-white border-4 border-[#F4E0EC]">
-                            <div className="flex flex-col items-center space-y-4">
-                                <div className="p-3 rounded-full bg-[#f0f9f6]">
-                                    <ChefHat className="w-8 h-8 text-[#E7BAD5]" />
-                                </div>
-                                <h2 className="text-xl font-semibold text-[#7c85d1]">Log Ingredients</h2>
-                                <p className="text-center text-muted-foreground">
-                                    Keep track of your ingredients
-                                </p>
-                            </div>
-                        </Card>
-                    </Link>
 
-                    <Link href="/trackNutrition">
+                    {/* <Link href="/trackNutrition">
                         <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer bg-white border-4 border-[#F4E0EC]">
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="p-3 rounded-full bg-[#f0f9f6]">
@@ -73,7 +60,7 @@ export default async function page() {
                                 </p>
                             </div>
                         </Card>
-                    </Link>
+                    </Link> */}
                 </div>
             </div>
         </div>

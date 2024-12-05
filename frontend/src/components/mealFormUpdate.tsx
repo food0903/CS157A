@@ -35,19 +35,41 @@ interface FoodsResponse {
     foodId: number;
     foodName: string;
     calories: number;
-    carbs: number | null;
-    fats: number | null;
-    protein: number | null;
+    carbs: number;
+    fats: number;
+    protein: number;
 }
 
-export function MealForm({ onClose }: { onClose: () => void }) {
+interface Meal {
+    mealId: number;
+    mealName: string;
+    date: string;
+    mealType: string;
+    foodIds: { [key: string]: number };
+}
+
+interface MealFormUpdateProps {
+    meal: Meal;
+    onClose: () => void;
+    onSubmit: (updatedMeal: Meal) => Promise<void>;
+}
+
+export function MealFormUpdate({ meal, onClose, onSubmit }: MealFormUpdateProps) {
     const [availableFoods, setAvailableFoods] = useState<FoodsResponse[]>([])
     const [error, setError] = useState<string | null>(null)
 
-    const { register, control, handleSubmit, formState: { errors } } = useForm<FormData>({
+    const { register, control, handleSubmit, formState: { errors }, setValue } = useForm<FormData>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            food_items: [{ food_id: '', quantity: 1 }],
+            meal_name: meal.mealName,
+            date: new Date(meal.date),
+            meal_type: meal.mealType,
+            food_items: meal.foodIds
+                ? Object.entries(meal.foodIds).map(([foodId, quantity]) => ({
+                    food_id: foodId,
+                    quantity: quantity,
+                }))
+                : [{ food_id: '', quantity: 1 }],
         },
     })
 
@@ -56,9 +78,10 @@ export function MealForm({ onClose }: { onClose: () => void }) {
         name: "food_items",
     })
 
-    const onSubmit = async (data: FormData) => {
-        console.log(data)
-        const body = {
+    const onSubmitForm = async (data: FormData) => {
+        console.log('Submitting form data:', data);
+        const updatedMeal: Meal = {
+            ...meal,
             mealName: data.meal_name,
             date: data.date.toISOString().split("T")[0],
             mealType: data.meal_type,
@@ -69,27 +92,28 @@ export function MealForm({ onClose }: { onClose: () => void }) {
         }
 
         try {
-            const response = await fetch("http://localhost:8080/api/meals", {
-                method: "POST",
+            const response = await fetch(`http://localhost:8080/api/meals/${meal.mealId}`, {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 credentials: "include",
-                body: JSON.stringify(body),
+                body: JSON.stringify(updatedMeal),
             });
 
             if (response.ok) {
-                const result = await response.json();
-                console.log("Meal successfully added:", result);
+                const result = await response.text();
+                console.log("Meal successfully updated:", result);
+                await onSubmit(updatedMeal);
                 onClose();
             } else {
-                const error = await response.text();
-                console.error("Failed to add meal:", error);
-                setError('Failed to add meal. Please try again.');
+                const errorText = await response.text();
+                console.error("Failed to update meal:", errorText);
+                setError('Failed to update meal. Please try again.');
             }
         } catch (error) {
-            console.error("Error creating meal:", error)
-            setError('Error creating meal. Please check your connection and try again.');
+            console.error("Error updating meal:", error)
+            setError('Error updating meal. Please check your connection and try again.');
         }
     }
 
@@ -118,11 +142,18 @@ export function MealForm({ onClose }: { onClose: () => void }) {
     }
 
     useEffect(() => {
-        fetchFoods().then(setAvailableFoods)
-    }, [])
+        fetchFoods().then(foods => {
+            console.log('Fetched foods:', foods);
+            setAvailableFoods(foods);
+        });
+    }, []);
+
+    useEffect(() => {
+        console.log('Current food items:', fields);
+    }, [fields]);
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
             <div>
                 <Label htmlFor="meal_name" className='font-bold'>Meal Name</Label>
                 <Input id="meal_name" {...register('meal_name')} className="mt-1" />
@@ -189,35 +220,37 @@ export function MealForm({ onClose }: { onClose: () => void }) {
                 {fields.map((field, index) => (
                     <div key={field.id} className="flex items-center space-x-2 mt-2">
                         <Controller
-                            control={control}
                             name={`food_items.${index}.food_id`}
-                            rules={{ required: 'Food selection is required' }}
-                            render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <SelectTrigger className="flex-grow">
+                            control={control}
+                            render={({ field: selectField }) => (
+                                <Select onValueChange={selectField.onChange} value={selectField.value}>
+                                    <SelectTrigger className="w-[200px]">
                                         <SelectValue placeholder={
                                             availableFoods.length > 0
                                                 ? "Select food"
-                                                : "No food item logged. Go back to dashboard and log your food first!"} />
+                                                : "No food item logged. Go back to dashboard and log your food first!"
+                                        } />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {availableFoods.map((food) => (
                                             <SelectItem key={food.foodId} value={food.foodId.toString()}>
-                                                {food.foodName}, calories: {food.calories}
+                                                {food.foodName} (Calories: {food.calories})
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             )}
                         />
+                        {errors.food_items?.[index]?.food_id && <p className="text-red-500 text-xs mt-1">{errors.food_items[index].food_id.message}</p>}
                         <Input
                             type="number"
-                            {...register(`food_items.${index}.quantity` as const, { valueAsNumber: true, required: 'Quantity is required', min: { value: 1, message: 'Quantity must be at least 1' } })}
+                            {...register(`food_items.${index}.quantity` as const, { valueAsNumber: true })}
                             className="w-20"
                             min={1}
                         />
+                        {errors.food_items?.[index]?.quantity && <p className="text-red-500 text-xs mt-1">{errors.food_items[index].quantity.message}</p>}
                         <Button type="button" variant="outline" size="icon" onClick={() => remove(index)} disabled={fields.length === 1}>
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 />
                         </Button>
                     </div>
                 ))}
@@ -235,7 +268,7 @@ export function MealForm({ onClose }: { onClose: () => void }) {
 
             <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                <Button type="submit" className='bg-[#a5aeff] hover:bg-[#5d6dff]'>Create Meal</Button>
+                <Button type="submit" className='bg-[#a5aeff] hover:bg-[#5d6dff]'>Update Meal</Button>
             </div>
         </form>
     )

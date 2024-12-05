@@ -5,8 +5,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from 'next/image'
 import Link from "next/link"
-import { useRouter } from 'next/navigation'
-import { registerSession, getClientSession } from '@/lib/actions'
 
 
 export default function page() {
@@ -14,40 +12,11 @@ export default function page() {
     const [password, setPassword] = useState('')
     const [passwordCheck, setPasswordCheck] = useState('')
     const [errors, setErrors] = useState<string | null>(null);
-    const router = useRouter()
 
-    useEffect(() => {
-        const checkSession = async () => {
-            const session = await getClientSession();
-            if (session.isLogged) {
-                router.push('/dashboard');
-            }
-        };
-
-        checkSession();
-    }, [router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         console.log('sigup with ', username, password, passwordCheck)
-
-        try {
-            const message = await registerSession(username, password, passwordCheck)
-            console.log('check iam here:', message)
-
-            if (message) {
-                setErrors(message)
-            } else {
-                router.push('/dashboard');
-            }
-        } catch (error) {
-            console.error('Error occurred while signing up:', error)
-            setErrors('An unexpected error occurred. Please try again.')
-        }
-        if (password !== passwordCheck) {
-            setErrors('Passwords do not match')
-            return
-        }
 
         try {
             const res = await fetch('http://localhost:8080/api/auth/register', {

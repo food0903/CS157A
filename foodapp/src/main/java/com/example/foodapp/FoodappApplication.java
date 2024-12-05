@@ -35,9 +35,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 public class FoodappApplication {
 
-	private String JDBC_URL = ;
-	private String USERNAME = ;
-	private String PASSWORD = ;
+	@Value("${spring.datasource.url}")
+	private String JDBC_URL;
+	@Value("${spring.datasource.username}")
+	private String USERNAME;
+	@Value("${spring.datasource.password}")
+	private String PASSWORD;
+
 	private final AuthenticationManager authenticationManager;
 
 	public FoodappApplication(AuthenticationManager authenticationManager) {
@@ -755,7 +759,6 @@ public class FoodappApplication {
 					"VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)";
 			PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 
-
 			// insert values into prepared statement
 			ps.setInt(1, Integer.parseInt((String) request.getSession().getAttribute("user_id")));
 			ps.setString(2, foodsRequest.getFoodName());
@@ -824,8 +827,8 @@ public class FoodappApplication {
 	 * - protein (Integer)
 	 */
 	@PutMapping("/api/foods/{foodId}")
-	public ResponseEntity<?> updateFoodById(@PathVariable Integer foodId, @RequestBody FoodsRequest foodsRequest, HttpServletRequest request) {
-
+	public ResponseEntity<?> updateFoodById(@PathVariable Integer foodId, @RequestBody FoodsRequest foodsRequest,
+			HttpServletRequest request) {
 
 		Connection conn = null;
 		boolean noFailures = true;
@@ -836,7 +839,7 @@ public class FoodappApplication {
 			conn.setAutoCommit(false);
 
 			/*
-			 *  Update food in foods table with food_id
+			 * Update food in foods table with food_id
 			 */
 
 			// create the prepared statement for inserting into meals
