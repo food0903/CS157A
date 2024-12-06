@@ -22,12 +22,12 @@ Please note that there is also a field called `spring.sql.init.mode` in `applica
 
 Additionally, any changes made to `application.properties` will not be tracked by git because its update-index has been set to --assume-unchanged.
 
-3. To run the backend server, change directories to the `./foodapp` directory then run the following command
+4. To run the backend server, change directories to the `./foodapp` directory then run the following command
 ```
 mvn spring-boot:run
 ```
 
-4. The backend should be hosted locally on http://localhost:8080
+5. The backend should be hosted locally on http://localhost:8080
 
 
 ## How to Setup and Run the Frontend
